@@ -2,6 +2,57 @@
 // Prefix header for all source files of the 'ReactiveCocoaIO' target in the 'ReactiveCocoaIO' project
 //
 
+// C Debug Macros
+
+#undef ASSERT
+#undef REQUIRE_NOT_NULL
+
+#if DEBUG
+
+#include <assert.h>
+#define ASSERT(a) assert(a)
+
+#define REQUIRE_NOT_NULL(a) do { \
+if ((a)==NULL) {\
+fprintf(stderr, "REQUIRE_NOT_NULL failed: NULL value for parameter " #a " on line %d in file %s\n", __LINE__, __FILE__);\
+abort();\
+}\
+} while (0)
+
+#else /* DEBUG */
+
+#define ASSERT(a)
+#define REQUIRE_NOT_NULL(a)
+
+#endif /* DEBUG */
+
 #ifdef __OBJC__
-	#import <Foundation/Foundation.h>
-#endif
+
+#define CANCELLATION_DISPOSABLE(NAME) \
+_CANCELLATION_FLAG; \
+RACCompoundDisposable *NAME = [RACCompoundDisposable compoundDisposable]; \
+[NAME addDisposable:_CANCELLATION_DISPOSABLE]
+
+#define IF_CANCELLED_RETURN(VALUE) \
+if (__isCancelled != 0) return VALUE
+
+#define IF_CANCELLED_BREAK() \
+if (__isCancelled != 0) break
+
+#define CANCELLATION_FLAG \
+&__isCancelled
+
+#define _CANCELLATION_FLAG \
+__block volatile uint32_t __isCancelled = 0
+
+#define _CANCELLATION_DISPOSABLE \
+[RACDisposable disposableWithBlock:^{ \
+OSAtomicOr32Barrier(1, &__isCancelled); \
+}]
+
+#import <libkern/OSAtomic.h>
+#import <ReactiveCocoaIO/ReactiveCocoaIO.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
+#import <ReactiveCocoa/EXTScope.h>
+
+#endif /* __OBJC__ */

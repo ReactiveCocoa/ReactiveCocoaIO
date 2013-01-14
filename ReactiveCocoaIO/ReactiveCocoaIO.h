@@ -6,8 +6,6 @@
 //  Copyright (c) 2013 Enthusiastic Code. All rights reserved.
 //
 
-#import <Foundation/Foundation.h>
-
-@interface ReactiveCocoaIO : NSObject
-
-@end
+#import <ReactiveCocoaIO/RCIOItem.h>
+#import <ReactiveCocoaIO/RCIOFile.h>
+#import <ReactiveCocoaIO/RCIODirectory.h>
