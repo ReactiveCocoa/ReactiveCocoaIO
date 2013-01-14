@@ -179,6 +179,7 @@
 		5F37CEFA16A4838E00F3020A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = InfoPlist.strings; sourceTree = "<group>"; };
 		5F37CEFB16A4838E00F3020A /* ReactiveCocoaIO-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "ReactiveCocoaIO-Info.plist"; sourceTree = "<group>"; };
 		5F37CF5F16A48C3A00F3020A /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
+		5F37CF6116A48E4000F3020A /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -216,7 +217,7 @@
 		5F37CA9B16A4726F00F3020A = {
 			isa = PBXGroup;
 			children = (
-				5F37CF5F16A48C3A00F3020A /* README.md */,
+				5F37CF6016A48E3200F3020A /* Documentation */,
 				5F37CAAB16A4726F00F3020A /* ReactiveCocoaIO */,
 				5F37CAC016A4726F00F3020A /* ReactiveCocoaIOTests */,
 				5F37CAA816A4726F00F3020A /* Frameworks */,
@@ -449,6 +450,15 @@
 				5F37CEF916A4838E00F3020A /* InfoPlist.strings */,
 			);
 			path = en.lproj;
+			sourceTree = "<group>";
+		};
+		5F37CF6016A48E3200F3020A /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				5F37CF5F16A48C3A00F3020A /* README.md */,
+				5F37CF6116A48E4000F3020A /* LICENSE.md */,
+			);
+			name = Documentation;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
