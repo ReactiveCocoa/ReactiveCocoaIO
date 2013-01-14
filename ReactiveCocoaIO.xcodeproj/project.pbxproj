@@ -806,6 +806,7 @@
 			buildSettings = {
 				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = include/ReactiveCocoaIO;
 			};
 			name = Debug;
 		};
@@ -815,6 +816,7 @@
 			buildSettings = {
 				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = include/ReactiveCocoaIO;
 			};
 			name = Release;
 		};
@@ -864,6 +866,7 @@
 			buildSettings = {
 				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PUBLIC_HEADERS_FOLDER_PATH = include/ReactiveCocoaIO;
 			};
 			name = Profile;
 		};
