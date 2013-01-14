@@ -1,0 +1,14 @@
+.DS_Store
+*.swp
+*~.nib
+
+Build
+
+*.mode1v3
+*.pbxuser
+*.perspective
+*.perspectivev3
+project.xcworkspace/
+xcuserdata/
+
+instrumentscli*.trace/
