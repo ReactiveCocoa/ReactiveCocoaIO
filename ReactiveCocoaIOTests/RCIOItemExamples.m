@@ -14,14 +14,18 @@ SharedExampleGroupsBegin(RCIOItem)
 sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	__block NSURL *itemURL = nil;
 	__block RCIOItem *item = nil;
+	__block NSURL * (^randomURL)(void) = nil;
 	__block BOOL (^itemExists)(void) = nil;
 	
 	before(^{
-		itemURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:[NSString stringWithFormat:@"%@", @(arc4random_uniform(8999999) + 1000000)]];
+		randomURL = ^{
+			return [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:[NSString stringWithFormat:@"%@", @(arc4random_uniform(8999999) + 1000000)]];
+		};
 		itemExists = ^{
 			return [NSFileManager.defaultManager fileExistsAtPath:itemURL.path];
 		};
 		
+		itemURL = randomURL();
 		[[data[RCIOItemExampleClass] itemWithURL:itemURL] subscribeNext:^(id x) {
 			item = x;
 		}];
@@ -45,6 +49,25 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		}];
 		
 		expect(sameItem).will.beIdenticalTo(item);
+	});
+	
+	it(@"should deallocate normally", ^{
+		__block BOOL deallocd = NO;
+		NSURL *url = randomURL();
+		
+		@autoreleasepool {
+			__block RCIOItem *deallocatingItem __attribute__((objc_precise_lifetime)) = nil;
+			[[data[RCIOItemExampleClass] itemWithURL:url] subscribeNext:^(id x) {
+				deallocatingItem = x;
+			}];
+			expect(deallocatingItem).willNot.beNil();
+			[deallocatingItem rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				deallocd = YES;
+			}]];
+		}
+		
+		expect(deallocd).will.beTruthy();
+		[NSFileManager.defaultManager removeItemAtURL:url error:NULL];
 	});
 	
 	it(@"should be able to delete itself", ^{
