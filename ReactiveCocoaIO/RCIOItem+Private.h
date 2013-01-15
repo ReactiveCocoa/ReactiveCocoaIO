@@ -12,12 +12,12 @@
 
 #if DEBUG
 #define ASSERT_FILE_SYSTEM_SCHEDULER() \
-NSCAssert(currentScheduler() == fileSystemScheduler(), @"Accessing filesystem on a scheduler that is not the filesystem scheduler.")
+NSCAssert(currentScheduler() == fileSystemScheduler(), @"Accessing file system on a scheduler that is not the file system scheduler.")
 #else
 #define ASSERT_FILE_SYSTEM_SCHEDULER()
 #endif
 
-// All filesystem accesses must be on this scheduler.
+// All file system accesses must be on this scheduler.
 RACScheduler *fileSystemScheduler();
 
 // All values sent by returned signals must be sent on the calling scheduler.

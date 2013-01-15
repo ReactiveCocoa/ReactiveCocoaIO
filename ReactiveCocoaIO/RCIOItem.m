@@ -333,7 +333,7 @@ NSMutableDictionary *fileSystemItemCache() {
 		
 		subject = [RACPropertySubject property];
 		
-		// Load the initial value from the filesystem
+		// Load the initial value from the file system
 		[fileSystemScheduler() schedule:^{
 			@strongify(self);
 			id value = [self loadXattrValueForKey:key];
