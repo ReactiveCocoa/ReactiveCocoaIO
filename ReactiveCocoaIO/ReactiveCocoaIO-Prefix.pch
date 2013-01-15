@@ -4,28 +4,6 @@
 
 // C Debug Macros
 
-#undef ASSERT
-#undef REQUIRE_NOT_NULL
-
-#if DEBUG
-
-#include <assert.h>
-#define ASSERT(a) assert(a)
-
-#define REQUIRE_NOT_NULL(a) do { \
-if ((a)==NULL) {\
-fprintf(stderr, "REQUIRE_NOT_NULL failed: NULL value for parameter " #a " on line %d in file %s\n", __LINE__, __FILE__);\
-abort();\
-}\
-} while (0)
-
-#else /* DEBUG */
-
-#define ASSERT(a)
-#define REQUIRE_NOT_NULL(a)
-
-#endif /* DEBUG */
-
 #ifdef __OBJC__
 
 #define CANCELLATION_DISPOSABLE(NAME) \

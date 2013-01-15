@@ -25,7 +25,7 @@ RACScheduler *fileSystemScheduler() {
 
 // Returns the current scheduler
 RACScheduler *currentScheduler() {
-	ASSERT(RACScheduler.currentScheduler != nil);
+	NSCAssert(RACScheduler.currentScheduler != nil, @"ReactiveCocoaIO called from a thread without a RACScheduler.");
   return RACScheduler.currentScheduler;
 }
 
@@ -135,7 +135,7 @@ NSMutableDictionary *fileSystemItemCache() {
 
 - (void)didCreate {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
-	ASSERT(self.urlBacking != nil);
+	NSAssert(self.urlBacking != nil, @"Created an item with a nil URL.");
 	
 	NSURL *url = self.urlBacking;
 	

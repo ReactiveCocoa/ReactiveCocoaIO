@@ -11,7 +11,8 @@
 @class RACScheduler;
 
 #if DEBUG
-#define ASSERT_FILE_SYSTEM_SCHEDULER() ASSERT(currentScheduler() == fileSystemScheduler())
+#define ASSERT_FILE_SYSTEM_SCHEDULER() \
+NSCAssert(currentScheduler() == fileSystemScheduler(), @"Accessing filesystem on a scheduler that is not the filesystem scheduler.")
 #else
 #define ASSERT_FILE_SYSTEM_SCHEDULER()
 #endif

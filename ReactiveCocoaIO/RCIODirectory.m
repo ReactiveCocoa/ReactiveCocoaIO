@@ -66,7 +66,7 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 }
 
 - (RACSignal *)childrenSignalWithOptions:(NSDirectoryEnumerationOptions)options {
-	ASSERT(!(options & NSDirectoryEnumerationSkipsPackageDescendants) && "RCIODirectory doesn't support NSDirectoryEnumerationSkipsPackageDescendants");
+	NSParameterAssert(!(options & NSDirectoryEnumerationSkipsPackageDescendants));
 	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
