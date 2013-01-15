@@ -7,9 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5F37CABF16A4726F00F3020A /* libReactiveCocoaIO-iOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CAA616A4726F00F3020A /* libReactiveCocoaIO-iOS.a */; };
 		5F37CAC516A4726F00F3020A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5F37CAC316A4726F00F3020A /* InfoPlist.strings */; };
-		5F37CAC816A4726F00F3020A /* ReactiveCocoaIOTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37CAC716A4726F00F3020A /* ReactiveCocoaIOTests.m */; };
+		5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */; };
 		5F37CAD416A472E100F3020A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CAD316A472E000F3020A /* Foundation.framework */; };
 		5F37CEA116A47DE300F3020A /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CEA016A47DE300F3020A /* SenTestingKit.framework */; };
 		5F37CEA216A47E0000F3020A /* libSpecta.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CE8616A47BE300F3020A /* libSpecta.a */; };
@@ -31,16 +30,11 @@
 		5F37CF0416A4842800F3020A /* RCIOFile.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F37CEAA16A480CE00F3020A /* RCIOFile.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5F37CF0516A4842800F3020A /* RCIODirectory.h in Headers */ = {isa = PBXBuildFile; fileRef = 5F37CEA716A480CE00F3020A /* RCIODirectory.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5F37CF3216A4875200F3020A /* ReactiveCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CED416A4818B00F3020A /* ReactiveCocoa.framework */; };
+		5F37D11316A5660F00F3020A /* ReactiveCocoaIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CEE316A4830200F3020A /* ReactiveCocoaIO.framework */; };
+		5F37D11616A5662800F3020A /* ReactiveCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CED416A4818B00F3020A /* ReactiveCocoa.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		5F37CABD16A4726F00F3020A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 5F37CA9D16A4726F00F3020A /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 5F37CAA516A4726F00F3020A;
-			remoteInfo = ReactiveCocoaIO;
-		};
 		5F37CE5816A47BE300F3020A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 5F37CAEE16A47BE100F3020A /* Expecta.xcodeproj */;
@@ -132,6 +126,20 @@
 			remoteGlobalIDString = 88F440AA153DAC820097B4C3;
 			remoteInfo = "ReactiveCocoa-iOS";
 		};
+		5F37D11416A5661B00F3020A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F37CA9D16A4726F00F3020A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5F37CEE216A4830200F3020A;
+			remoteInfo = ReactiveCocoaIO;
+		};
+		5F37D11716A5663200F3020A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 5F37CCA316A47BE100F3020A /* ReactiveCocoa.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 88037F8215056328001A5B19;
+			remoteInfo = ReactiveCocoa;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -141,8 +149,7 @@
 		5F37CAB716A4726F00F3020A /* ReactiveCocoaIOTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReactiveCocoaIOTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F37CAC216A4726F00F3020A /* ReactiveCocoaIOTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ReactiveCocoaIOTests-Info.plist"; sourceTree = "<group>"; };
 		5F37CAC416A4726F00F3020A /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		5F37CAC616A4726F00F3020A /* ReactiveCocoaIOTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactiveCocoaIOTests.h; sourceTree = "<group>"; };
-		5F37CAC716A4726F00F3020A /* ReactiveCocoaIOTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReactiveCocoaIOTests.m; sourceTree = "<group>"; };
+		5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCIOItemExamples.m; sourceTree = "<group>"; };
 		5F37CAD316A472E000F3020A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		5F37CAEE16A47BE100F3020A /* Expecta.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = Expecta.xcodeproj; sourceTree = "<group>"; };
 		5F37CCA316A47BE100F3020A /* ReactiveCocoa.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ReactiveCocoa.xcodeproj; path = ReactiveCocoaFramework/ReactiveCocoa.xcodeproj; sourceTree = "<group>"; };
@@ -180,6 +187,8 @@
 		5F37CEFB16A4838E00F3020A /* ReactiveCocoaIO-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "ReactiveCocoaIO-Info.plist"; sourceTree = "<group>"; };
 		5F37CF5F16A48C3A00F3020A /* README.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = README.md; sourceTree = "<group>"; };
 		5F37CF6116A48E4000F3020A /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.md; sourceTree = "<group>"; };
+		5F37D0EC16A5590100F3020A /* ReactiveCocoaIOTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReactiveCocoaIOTests-Prefix.pch"; sourceTree = "<group>"; };
+		5F37D0ED16A5641400F3020A /* RCIOItemExamples.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCIOItemExamples.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,9 +204,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F37D11316A5660F00F3020A /* ReactiveCocoaIO.framework in Frameworks */,
+				5F37D11616A5662800F3020A /* ReactiveCocoa.framework in Frameworks */,
 				5F37CEA316A47E0600F3020A /* libExpecta.a in Frameworks */,
 				5F37CEA216A47E0000F3020A /* libSpecta.a in Frameworks */,
-				5F37CABF16A4726F00F3020A /* libReactiveCocoaIO-iOS.a in Frameworks */,
 				5F37CEA116A47DE300F3020A /* SenTestingKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -276,8 +286,8 @@
 		5F37CAC016A4726F00F3020A /* ReactiveCocoaIOTests */ = {
 			isa = PBXGroup;
 			children = (
-				5F37CAC616A4726F00F3020A /* ReactiveCocoaIOTests.h */,
-				5F37CAC716A4726F00F3020A /* ReactiveCocoaIOTests.m */,
+				5F37D0ED16A5641400F3020A /* RCIOItemExamples.h */,
+				5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */,
 				5F37CAC116A4726F00F3020A /* Supporting Files */,
 			);
 			path = ReactiveCocoaIOTests;
@@ -286,6 +296,7 @@
 		5F37CAC116A4726F00F3020A /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				5F37D0EC16A5590100F3020A /* ReactiveCocoaIOTests-Prefix.pch */,
 				5F37CAC216A4726F00F3020A /* ReactiveCocoaIOTests-Info.plist */,
 				5F37CAC316A4726F00F3020A /* InfoPlist.strings */,
 			);
@@ -519,7 +530,8 @@
 			buildRules = (
 			);
 			dependencies = (
-				5F37CABE16A4726F00F3020A /* PBXTargetDependency */,
+				5F37D11516A5661B00F3020A /* PBXTargetDependency */,
+				5F37D11816A5663200F3020A /* PBXTargetDependency */,
 			);
 			name = ReactiveCocoaIOTests;
 			productName = ReactiveCocoaIOTests;
@@ -718,7 +730,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				5F37CAC816A4726F00F3020A /* ReactiveCocoaIOTests.m in Sources */,
+				5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -735,11 +747,6 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		5F37CABE16A4726F00F3020A /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 5F37CAA516A4726F00F3020A /* ReactiveCocoaIO-iOS */;
-			targetProxy = 5F37CABD16A4726F00F3020A /* PBXContainerItemProxy */;
-		};
 		5F37CF3416A4875C00F3020A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = ReactiveCocoa;
@@ -749,6 +756,16 @@
 			isa = PBXTargetDependency;
 			name = "ReactiveCocoa-iOS";
 			targetProxy = 5F37CF3516A4876900F3020A /* PBXContainerItemProxy */;
+		};
+		5F37D11516A5661B00F3020A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5F37CEE216A4830200F3020A /* ReactiveCocoaIO */;
+			targetProxy = 5F37D11416A5661B00F3020A /* PBXContainerItemProxy */;
+		};
+		5F37D11816A5663200F3020A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ReactiveCocoa;
+			targetProxy = 5F37D11716A5663200F3020A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -825,7 +842,11 @@
 			baseConfigurationReference = 5F37CD3E16A47BE100F3020A /* Mac-Application.xcconfig */;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "\"$(DEVELOPER_LIBRARY_DIR)/Frameworks\"";
-				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
+				GCC_PREFIX_HEADER = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"External/specta/src/**",
+					"External/expecta/src/**",
+				);
 				INFOPLIST_FILE = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Info.plist";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -838,7 +859,11 @@
 			baseConfigurationReference = 5F37CD3E16A47BE100F3020A /* Mac-Application.xcconfig */;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "\"$(DEVELOPER_LIBRARY_DIR)/Frameworks\"";
-				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
+				GCC_PREFIX_HEADER = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"External/specta/src/**",
+					"External/expecta/src/**",
+				);
 				INFOPLIST_FILE = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Info.plist";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -875,7 +900,11 @@
 			baseConfigurationReference = 5F37CD3E16A47BE100F3020A /* Mac-Application.xcconfig */;
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = "\"$(DEVELOPER_LIBRARY_DIR)/Frameworks\"";
-				GCC_PREFIX_HEADER = "ReactiveCocoaIO/ReactiveCocoaIO-Prefix.pch";
+				GCC_PREFIX_HEADER = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"External/specta/src/**",
+					"External/expecta/src/**",
+				);
 				INFOPLIST_FILE = "ReactiveCocoaIOTests/ReactiveCocoaIOTests-Info.plist";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";

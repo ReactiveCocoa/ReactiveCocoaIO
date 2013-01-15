@@ -2,8 +2,6 @@
 // Prefix header for all source files of the 'ReactiveCocoaIO' target in the 'ReactiveCocoaIO' project
 //
 
-// C Debug Macros
-
 #ifdef __OBJC__
 
 #define CANCELLATION_DISPOSABLE(NAME) \
