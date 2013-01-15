@@ -10,4 +10,8 @@
 
 SpecBegin(RCIODirectory)
 
+describe(@"RCIODirectory", ^{
+	itShouldBehaveLike(RCIOItemExamples, @{ RCIOItemExampleClass: RCIODirectory.class });
+});
+
 SpecEnd

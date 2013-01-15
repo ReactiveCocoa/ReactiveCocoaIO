@@ -28,6 +28,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		expect(item).willNot.beNil();
 	});
 	
+	after(^{
+		item = nil;
+		[NSFileManager.defaultManager removeItemAtURL:itemURL error:NULL];
+		expect(itemExists()).will.beFalsy();
+		itemURL = nil;
+	});
+	
 	it(@"should be able to create itself", ^{
 		expect(itemExists()).to.beFalsy();
 		__block RCIOItem *createdItem = nil;
@@ -42,17 +49,41 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			completed = YES;
 		}];
 		
-		expect(createdItem).willNot.beNil();
+		expect(createdItem).will.equal(item);
 		expect(errored).will.beFalsy();
 		expect(completed).will.beTruthy();
 		expect(itemExists()).will.beTruthy();
 	});
 	
-	after(^{
-		[NSFileManager.defaultManager removeItemAtURL:itemURL error:NULL];
-	});
-	
+	describe(@"after being created", ^{
+		before(^{
+			__block RCIOItem *createdItem = nil;
+			[[item create] subscribeNext:^(id x) {
+				createdItem = x;
+			}];
+			expect(createdItem).will.equal(item);
+			expect(itemExists()).will.beTruthy();
+		});
+		
+		it(@"should be able to delete itself", ^{
+			__block RCIOItem *deletedItem = nil;
+			__block BOOL errored = NO;
+			__block BOOL completed = NO;
+			
+			[[item delete] subscribeNext:^(id x) {
+				deletedItem = x;
+			} error:^(NSError *error) {
+				errored = NO;
+			} completed:^{
+				completed = YES;
+			}];
 
+			expect(deletedItem).will.equal(item);
+			expect(errored).will.beFalsy();
+			expect(completed).will.beTruthy();
+			expect(itemExists()).will.beFalsy();
+		});
+	});
 });
 
 SharedExampleGroupsEnd
