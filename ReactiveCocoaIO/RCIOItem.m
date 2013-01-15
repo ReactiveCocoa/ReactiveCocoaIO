@@ -72,13 +72,11 @@ NSMutableDictionary *fileSystemItemCache() {
 				if (item != nil) fileSystemItemCache()[url] = item;
 			}
 			
-			if (item != nil) {
-				if ([item isKindOfClass:self]) {
-					[subscriber sendNext:item];
-					[subscriber sendCompleted];
-				} else {
-					[subscriber sendError:[NSError errorWithDomain:@"ArtCodeErrorDomain" code:-1 userInfo:nil]];
-				}
+			if (item != nil && [item isKindOfClass:self]) {
+				[subscriber sendNext:item];
+				[subscriber sendCompleted];
+			} else {
+				[subscriber sendError:[NSError errorWithDomain:@"ArtCodeErrorDomain" code:-1 userInfo:nil]];
 			}
 		}];
 	}] deliverOn:currentScheduler()];
