@@ -127,7 +127,7 @@ NSMutableDictionary *fileSystemItemCache() {
 	}];
 }
 
-- (RACSignal *)parent {
+- (RACSignal *)parentSignal {
 	return [[self.urlSignal map:^(NSURL *value) {
 		return [RCIOItem itemWithURL:value.URLByDeletingLastPathComponent];
 	}] switchToLatest];
