@@ -6,3 +6,8 @@
 //  Copyright (c) 2013 Enthusiastic Code. All rights reserved.
 //
 
+// The name of the shared examples for RCIOItem instances.
+extern NSString * const RCIOItemExamples;
+
+// Class
+extern NSString * const RCIOItemExampleClass;

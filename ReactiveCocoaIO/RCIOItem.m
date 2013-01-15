@@ -15,29 +15,29 @@
 
 // Scheduler for serializing accesses to the file system
 RACScheduler *fileSystemScheduler() {
-  static RACScheduler *fileSystemScheduler = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
+	static RACScheduler *fileSystemScheduler = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
 		fileSystemScheduler = [RACScheduler scheduler];
-  });
-  return fileSystemScheduler;
+	});
+	return fileSystemScheduler;
 }
 
 // Returns the current scheduler
 RACScheduler *currentScheduler() {
 	NSCAssert(RACScheduler.currentScheduler != nil, @"ReactiveCocoaIO called from a thread without a RACScheduler.");
-  return RACScheduler.currentScheduler;
+	return RACScheduler.currentScheduler;
 }
 
 // Cache of existing RCIOItems, used for uniquing
 NSMutableDictionary *fileSystemItemCache() {
-  ASSERT_FILE_SYSTEM_SCHEDULER();
-  static NSMutableDictionary *itemCache = nil;
-  static dispatch_once_t onceToken;
-  dispatch_once(&onceToken, ^{
-    itemCache = [NSMutableDictionary dictionary];
-  });
-  return itemCache;
+	ASSERT_FILE_SYSTEM_SCHEDULER();
+	static NSMutableDictionary *itemCache = nil;
+	static dispatch_once_t onceToken;
+	dispatch_once(&onceToken, ^{
+		itemCache = [NSMutableDictionary dictionary];
+	});
+	return itemCache;
 }
 
 @interface RCIOItem ()
@@ -99,14 +99,14 @@ NSMutableDictionary *fileSystemItemCache() {
 }
 
 - (instancetype)initWithURL:(NSURL *)url {
-  ASSERT_FILE_SYSTEM_SCHEDULER();
-  self = [super init];
-  if (!self) {
-    return nil;
-  }
-  _urlBacking = url;
-  _extendedAttributesBacking = [NSMutableDictionary dictionary];
-  return self;
+	ASSERT_FILE_SYSTEM_SCHEDULER();
+	self = [super init];
+	if (!self) {
+		return nil;
+	}
+	_urlBacking = url;
+	_extendedAttributesBacking = [NSMutableDictionary dictionary];
+	return self;
 }
 
 - (NSURL *)url {
@@ -114,7 +114,7 @@ NSMutableDictionary *fileSystemItemCache() {
 }
 
 - (RACSignal *)urlSignal {
-  return [RACAbleWithStart(self.urlBacking) deliverOn:currentScheduler()];
+	return [RACAbleWithStart(self.urlBacking) deliverOn:currentScheduler()];
 }
 
 - (NSString *)name {
@@ -122,9 +122,9 @@ NSMutableDictionary *fileSystemItemCache() {
 }
 
 - (RACSignal *)nameSignal {
-  return [self.urlSignal map:^NSString *(NSURL *url) {
-    return url.lastPathComponent;
-  }];
+	return [self.urlSignal map:^NSString *(NSURL *url) {
+		return url.lastPathComponent;
+	}];
 }
 
 - (RACSignal *)parent {
@@ -348,7 +348,7 @@ NSMutableDictionary *fileSystemItemCache() {
 		if (subject != nil) return subject;
 		
 		subject = [RACPropertySubject property];
-			
+		
 		// Load the initial value from the filesystem
 		[fileSystemScheduler() schedule:^{
 			@strongify(self);
@@ -375,7 +375,7 @@ static size_t _xattrMaxSize = 4 * 1024; // 4 kB
 
 - (id)loadXattrValueForKey:(NSString *)key {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
-
+	
 	id xattrValue = nil;
 	void *xattrBytes = malloc(_xattrMaxSize);
 	ssize_t xattrBytesCount = getxattr(self.urlBacking.path.fileSystemRepresentation, key.UTF8String, xattrBytes, _xattrMaxSize, 0, 0);

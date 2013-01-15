@@ -32,6 +32,9 @@
 		5F37CF3216A4875200F3020A /* ReactiveCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CED416A4818B00F3020A /* ReactiveCocoa.framework */; };
 		5F37D11316A5660F00F3020A /* ReactiveCocoaIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CEE316A4830200F3020A /* ReactiveCocoaIO.framework */; };
 		5F37D11616A5662800F3020A /* ReactiveCocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CED416A4818B00F3020A /* ReactiveCocoa.framework */; };
+		5F37D11B16A5692400F3020A /* RCIOItemSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37D11A16A5692400F3020A /* RCIOItemSpec.m */; };
+		5F37D11E16A5693B00F3020A /* RCIOFileSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37D11D16A5693A00F3020A /* RCIOFileSpec.m */; };
+		5F37D12116A5696300F3020A /* RCIODirectorySpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37D12016A5696300F3020A /* RCIODirectorySpec.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -189,6 +192,9 @@
 		5F37CF6116A48E4000F3020A /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.md; sourceTree = "<group>"; };
 		5F37D0EC16A5590100F3020A /* ReactiveCocoaIOTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReactiveCocoaIOTests-Prefix.pch"; sourceTree = "<group>"; };
 		5F37D0ED16A5641400F3020A /* RCIOItemExamples.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCIOItemExamples.h; sourceTree = "<group>"; };
+		5F37D11A16A5692400F3020A /* RCIOItemSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOItemSpec.m; sourceTree = "<group>"; };
+		5F37D11D16A5693A00F3020A /* RCIOFileSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOFileSpec.m; sourceTree = "<group>"; };
+		5F37D12016A5696300F3020A /* RCIODirectorySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIODirectorySpec.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -288,6 +294,9 @@
 			children = (
 				5F37D0ED16A5641400F3020A /* RCIOItemExamples.h */,
 				5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */,
+				5F37D11A16A5692400F3020A /* RCIOItemSpec.m */,
+				5F37D11D16A5693A00F3020A /* RCIOFileSpec.m */,
+				5F37D12016A5696300F3020A /* RCIODirectorySpec.m */,
 				5F37CAC116A4726F00F3020A /* Supporting Files */,
 			);
 			path = ReactiveCocoaIOTests;
@@ -731,6 +740,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */,
+				5F37D11B16A5692400F3020A /* RCIOItemSpec.m in Sources */,
+				5F37D11E16A5693B00F3020A /* RCIOFileSpec.m in Sources */,
+				5F37D12116A5696300F3020A /* RCIODirectorySpec.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -103,7 +103,7 @@
 
 - (RACSignal *)save {
 	@weakify(self);
-
+	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			@strongify(self);
