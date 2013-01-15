@@ -21,26 +21,9 @@
 
 #pragma mark RCIOItem
 
-- (RACSignal *)create {
-	@weakify(self);
-	
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		CANCELLATION_DISPOSABLE(disposable);
-		
-		[disposable addDisposable:[fileSystemScheduler() schedule:^{
-			@strongify(self);
-			NSURL *url = self.urlBacking;
-			NSError *error = nil;
-			
-			if ([NSFileManager.defaultManager fileExistsAtPath:url.path] || ![NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:&error]) {
-				[subscriber sendError:error];
-			} else {
-				[disposable addDisposable:[super.create subscribe:subscriber]];
-			}
-		}]];
-		
-		return disposable;
-	}] deliverOn:currentScheduler()];
++ (instancetype)createItemAtURL:(NSURL *)url {
+	if (![NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]) return nil;
+	return [[self alloc] initWithURL:url];
 }
 
 #pragma mark RCIODirectory

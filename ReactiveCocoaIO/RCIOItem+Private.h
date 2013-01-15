@@ -30,6 +30,11 @@ NSMutableDictionary *fileSystemItemCache();
 
 @property (atomic, strong) NSURL *urlBacking;
 
+// Returns a newly created item at `url` or nil.
+//
+// Must be called on `fileSystemScheduler()`
++ (instancetype)createItemAtURL:(NSURL *)url;
+
 // Returns the item at `url` or nil.
 //
 // Must be called on `fileSystemScheduler()`

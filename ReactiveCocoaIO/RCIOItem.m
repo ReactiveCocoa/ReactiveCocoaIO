@@ -61,14 +61,22 @@ NSMutableDictionary *fileSystemItemCache() {
 
 #pragma mark RCIOItem
 
-+ (RACSignal *)itemWithURL:(NSURL *)url {
-	if (![url isFileURL]) return [RACSignal error:[NSError errorWithDomain:@"ArtCodeErrorDomain" code:-1 userInfo:nil]];
++ (RACSignal *)itemWithURL:(NSURL *)url mode:(RCIOItemMode)mode {
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			RCIOItem *item = fileSystemItemCache()[url];
 			if (item == nil) {
-				item = [self loadItemFromURL:url];
-				if (item == nil && self != RCIOItem.class) item = [[self alloc] initWithURL:url];
+				if ([NSFileManager.defaultManager fileExistsAtPath:url.path]) {
+					if (mode & RCIOItemModeExclusiveAccess) {
+						[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+						return;
+					}
+					item = [self loadItemFromURL:url];
+				} else {
+					item = [self createItemAtURL:url];
+					[item didCreate];
+				}
+				
 				if (item != nil) fileSystemItemCache()[url] = item;
 			}
 			
@@ -76,10 +84,18 @@ NSMutableDictionary *fileSystemItemCache() {
 				[subscriber sendNext:item];
 				[subscriber sendCompleted];
 			} else {
-				[subscriber sendError:[NSError errorWithDomain:@"ArtCodeErrorDomain" code:-1 userInfo:nil]];
+				[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
 			}
 		}];
 	}] deliverOn:currentScheduler()];
+}
+
++ (RACSignal *)itemWithURL:(NSURL *)url {
+	return [self itemWithURL:url mode:RCIOItemModeReadWrite];
+}
+
++ (instancetype)createItemAtURL:(NSURL *)url {
+	return nil;
 }
 
 + (instancetype)loadItemFromURL:(NSURL *)url {
@@ -190,36 +206,6 @@ NSMutableDictionary *fileSystemItemCache() {
 @end
 
 @implementation RCIOItem (FileManagement)
-
-- (RACSignal *)create {
-	ASSERT_FILE_SYSTEM_SCHEDULER();
-	@weakify(self);
-	
-	NSMutableArray *signals = [NSMutableArray array];
-	@synchronized (self) {
-		[self.extendedAttributesBacking enumerateKeysAndObjectsUsingBlock:^(NSString *key, RACPropertySubject *extendedAttribute, BOOL *stop) {
-			[signals addObject:[[extendedAttribute take:1] map:^(id value) {
-				return [RACTuple tupleWithObjects:key, value, nil];
-			}]];
-		}];
-	}
-	
-	if (signals.count == 0) return [[RACSignal return:self] doNext:^(id x) {
-		[self didCreate];
-	}];
-	
-	return [[RACSignal zip:signals] map:^(RACTuple *tuples) {
-		@strongify(self);
-		
-		for (RACTuple *tuple in tuples) {
-			RACTupleUnpack(NSString *key, id value) = tuple;
-			[self saveXattrValue:value forKey:key];
-		}
-		
-		[self didCreate];
-		return self;
-	}];
-}
 
 - (RACSignal *)moveTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
 	@weakify(self);

@@ -23,6 +23,11 @@
 
 #pragma mark RCIOItem
 
++ (instancetype)createItemAtURL:(NSURL *)url {
+	if (![@"" writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:NULL]) return nil;
+	return [[self alloc] initWithURL:url];
+}
+
 - (instancetype)initWithURL:(NSURL *)url {
 	self = [super initWithURL:url];
 	if (self == nil) return nil;
@@ -31,29 +36,6 @@
 	_contentBacking = @"";
 	
 	return self;
-}
-
-- (RACSignal *)create {
-	@weakify(self);
-	
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		CANCELLATION_DISPOSABLE(disposable);
-		
-		[disposable addDisposable:[fileSystemScheduler() schedule:^{
-			@strongify(self);
-			NSURL *url = self.urlBacking;
-			NSError *error = nil;
-			
-			if ([NSFileManager.defaultManager fileExistsAtPath:url.path] || ![self.contentBacking writeToURL:url atomically:NO encoding:self.encodingBacking error:&error]) {
-				[subscriber sendError:error];
-				return;
-			}
-			self.loaded = YES;
-			[disposable addDisposable:[super.create subscribe:subscriber]];
-		}]];
-		
-		return disposable;
-	}] deliverOn:currentScheduler()];
 }
 
 #pragma mark RCIOFile
@@ -111,7 +93,7 @@
 			NSError *error = nil;
 			
 			if (!url) {
-				[subscriber sendError:[NSError errorWithDomain:@"ArtCodeErrorDomain" code:-1 userInfo:nil]];
+				[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
 				return;
 			}
 			

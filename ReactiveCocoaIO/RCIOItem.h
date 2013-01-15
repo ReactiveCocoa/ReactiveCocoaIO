@@ -10,12 +10,33 @@
 
 @class RACSignal, RACPropertySubject, RCIODirectory;
 
+// Specifies how the filesystem item should be accessed.
+//
+// RCIOItemModeReadWrite       - Access the item for both reading and writing.
+//                               If the item doesn't exist on the filesystem, it
+//                               will be created.
+// RCIOItemModeExclusiveAccess - Ensure the returned RCIOItem is the only handle
+//                               to the filesystem item. Doesn't currently
+//                               provide any guarantee to that other than
+//                               ensuring the filesystem item didn't exist
+//                               before the call.
+typedef enum : NSUInteger {
+	RCIOItemModeReadWrite = 0,
+	RCIOItemModeExclusiveAccess = 1 << 8,
+} RCIOItemMode;
+
 @interface RCIOItem : NSObject
 
 // Returns a signal that sends the item at `url`, then completes.
 //
-// Note that if the item doesn't exist on the file system, it won't be possible
-// to create it with the item returned from this call.
+// url  - The url of the filesystem item to access.
+// mode - Specifies how the filesystem item should be accessed.
+//
+// Note that the RCIOItem class itself does not support creating items that
+// do not already exist on the filesystem. Use the subclasses instead.
++ (RACSignal *)itemWithURL:(NSURL *)url mode:(RCIOItemMode)mode;
+
+// Equivalent to `-itemWithURL:url mode:RCIOItemModeReadWrite`.
 + (RACSignal *)itemWithURL:(NSURL *)url;
 
 // The url of the receiver.
@@ -36,11 +57,6 @@
 @end
 
 @interface RCIOItem (FileManagement)
-
-// Creates the receiver if it doesn't exist on it's persistence mechanism.
-//
-// Returns a signal that sends the newly created item and completes.
-- (RACSignal *)create;
 
 // Moves the receiver to the given directory.
 //
