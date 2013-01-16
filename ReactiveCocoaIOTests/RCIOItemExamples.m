@@ -90,7 +90,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		__block RCIODirectory *parent = nil;
 		__block BOOL errored = NO;
 		
-		[[item parentSignal] subscribeNext:^(id x) {
+		[[[item parentSignal] take:1] subscribeNext:^(id x) {
 			parent = x;
 		}error:^(NSError *error) {
 			errored = YES;
@@ -98,6 +98,41 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		
 		expect(parent).willNot.beNil();
 		expect(errored).will.beFalsy();
+	});
+	
+	it(@"should deallocate if a reference to it's parent is kept", ^{
+		__block BOOL deallocd = NO;
+		NSURL *url = randomURL();
+		__block RCIODirectory *parent = nil;
+		
+		@autoreleasepool {
+			[[data[RCIOItemExampleClass] itemWithURL:url] subscribeNext:^(RCIOItem *x) {
+				[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+				[[[x parentSignal] take:1] subscribeNext:^(RCIODirectory *y) {
+					parent = y;
+				}];
+			}];
+			expect(parent).willNot.beNil();
+		}
+		
+		expect(deallocd).will.beTruthy();
+		[NSFileManager.defaultManager removeItemAtURL:url error:NULL];
+	});
+	
+	it(@"should let it's parent deallocate", ^{
+		__block BOOL parentDeallocd = NO;
+		
+		@autoreleasepool {
+			[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent) {
+				[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					parentDeallocd = YES;
+				}]];
+			}];
+		}
+		
+		expect(parentDeallocd).will.beTruthy();
 	});
 	
 	it(@"should be contained in it's parent's children", ^{
