@@ -20,6 +20,10 @@
 	NSMutableDictionary *_backing;
 }
 
++ (instancetype)dictionary {
+	return [[self alloc] init];
+}
+
 - (id)init {
 	self = [super init];
 	if (self == nil) return nil;
