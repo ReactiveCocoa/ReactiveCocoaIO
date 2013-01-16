@@ -29,15 +29,18 @@ RACScheduler *currentScheduler() {
 	return RACScheduler.currentScheduler;
 }
 
-// Cache of existing RCIOItems, used for uniquing
-NSMutableDictionary *fileSystemItemCache() {
-	ASSERT_FILE_SYSTEM_SCHEDULER();
+// Access the cache of existing RCIOItems, used for uniquing
+static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
+	NSCAssert(block != nil, @"Passed nil block to accessItemCache");
 	static NSMutableDictionary *itemCache = nil;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		itemCache = [NSMutableDictionary dictionary];
 	});
-	return itemCache;
+	
+	@synchronized(itemCache) {
+		block(itemCache);
+	}
 }
 
 @interface RCIOItem ()
@@ -64,8 +67,10 @@ NSMutableDictionary *fileSystemItemCache() {
 + (RACSignal *)itemWithURL:(NSURL *)url mode:(RCIOItemMode)mode {
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			RCIOItem *item = fileSystemItemCache()[url];
-			if (item == nil) {
+			__block RCIOItem *item = nil;
+			accessItemCache(^(NSMutableDictionary *itemCache) {
+				item = itemCache[url];
+				if (item != nil) return;
 				if ([NSFileManager.defaultManager fileExistsAtPath:url.path]) {
 					if (mode & RCIOItemModeExclusiveAccess) {
 						[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
@@ -77,8 +82,8 @@ NSMutableDictionary *fileSystemItemCache() {
 					[item didCreate];
 				}
 				
-				if (item != nil) fileSystemItemCache()[url] = item;
-			}
+				if (item != nil) itemCache[url] = item;
+			});
 			
 			if (item != nil && [item isKindOfClass:self]) {
 				[subscriber sendNext:item];
@@ -152,44 +157,52 @@ NSMutableDictionary *fileSystemItemCache() {
 	NSAssert(self.urlBacking != nil, @"Created an item with a nil URL.");
 	
 	NSURL *url = self.urlBacking;
-	
-	RCIODirectory *parent = fileSystemItemCache()[url.URLByDeletingLastPathComponent];
+	__block RCIODirectory *parent = nil;
+	accessItemCache(^(NSMutableDictionary *itemCache) {
+		parent = itemCache[url.URLByDeletingLastPathComponent];
+	});
 	[parent didAddItem:self];
 }
 
 - (void)didMoveToURL:(NSURL *)url {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
+	
 	NSURL *fromURL = self.urlBacking;
-	
-	RCIODirectory *fromParent = fileSystemItemCache()[fromURL.URLByDeletingLastPathComponent];
+	__block RCIODirectory *fromParent = nil;
+	__block RCIODirectory *toParent = nil;
+	accessItemCache(^(NSMutableDictionary *itemCache) {
+		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent];
+		toParent = itemCache[url.URLByDeletingLastPathComponent];
+		[itemCache removeObjectForKey:fromURL];
+		self.urlBacking = url;
+		itemCache[url] = self;
+	});
 	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
-	
-	[fileSystemItemCache() removeObjectForKey:fromURL];
-	self.urlBacking = url;
-	fileSystemItemCache()[url] = self;
-	
-	RCIODirectory *toParent = fileSystemItemCache()[url.URLByDeletingLastPathComponent];
 	if ([toParent isKindOfClass:RCIODirectory.class]) [toParent didAddItem:self];
 }
 
 - (void)didCopyToURL:(NSURL *)url {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
 	
-	fileSystemItemCache()[url] = self;
-	
-	RCIODirectory *toParent = fileSystemItemCache()[url.URLByDeletingLastPathComponent];
+	__block RCIODirectory *toParent = nil;
+	accessItemCache(^(NSMutableDictionary *itemCache) {
+		toParent = itemCache[url.URLByDeletingLastPathComponent];
+		itemCache[url] = self;
+	});
 	if ([toParent isKindOfClass:RCIODirectory.class]) [toParent didAddItem:self];
 }
 
 - (void)didDelete {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
+
 	NSURL *fromURL = self.urlBacking;
-	
-	RCIODirectory *fromParent = fileSystemItemCache()[fromURL.URLByDeletingLastPathComponent];
-	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
-	
-	[fileSystemItemCache() removeObjectForKey:fromURL];
-	self.urlBacking = nil;
+	__block RCIODirectory *fromParent =nil;
+	accessItemCache(^(NSMutableDictionary *itemCache) {
+		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent];
+		[itemCache removeObjectForKey:fromURL];
+		self.urlBacking = nil;
+	});
+	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];	
 }
 
 #pragma mark NSObject
@@ -375,7 +388,6 @@ static size_t _xattrMaxSize = 4 * 1024; // 4 kB
 	ASSERT_FILE_SYSTEM_SCHEDULER();
 	
 	if (self.urlBacking == nil) return;
-	
 	if (value) {
 		NSData *xattrData = [NSKeyedArchiver archivedDataWithRootObject:value];
 		setxattr(self.urlBacking.path.fileSystemRepresentation, key.UTF8String, [xattrData bytes], [xattrData length], 0, 0);

@@ -23,9 +23,6 @@ RACScheduler *fileSystemScheduler();
 // All values sent by returned signals must be sent on the calling scheduler.
 RACScheduler *currentScheduler();
 
-// Accesses to the cache must be on `fileSystemScheduler()`.
-NSMutableDictionary *fileSystemItemCache();
-
 @interface RCIOItem ()
 
 @property (atomic, strong) NSURL *urlBacking;
