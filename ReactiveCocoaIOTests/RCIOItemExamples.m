@@ -56,14 +56,11 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		NSURL *url = randomURL();
 		
 		@autoreleasepool {
-			__block RCIOItem *deallocatingItem __attribute__((objc_precise_lifetime)) = nil;
 			[[data[RCIOItemExampleClass] itemWithURL:url] subscribeNext:^(id x) {
-				deallocatingItem = x;
+				[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
 			}];
-			expect(deallocatingItem).willNot.beNil();
-			[deallocatingItem rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-				deallocd = YES;
-			}]];
 		}
 		
 		expect(deallocd).will.beTruthy();
