@@ -20,7 +20,10 @@
 // Returns the object stored weakly at `key`.
 - (id)objectForKeyedSubscript:(id)key;
 
-// Stores `obj` weakly for `key`.
+// Stores `obj` weakly at `key`.
 - (void)setObject:(id)obj forKeyedSubscript:(id)key;
+
+// Removes the object stored at `key`.
+- (void)removeObjectForKey:(id)key;
 
 @end

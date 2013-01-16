@@ -12,6 +12,7 @@
 
 #import "RCIODirectory+Private.h"
 #import "RCIOFile.h"
+#import "RCIOWeakDictionary.h"
 
 // Scheduler for serializing accesses to the file system
 RACScheduler *fileSystemScheduler() {
@@ -30,12 +31,12 @@ RACScheduler *currentScheduler() {
 }
 
 // Access the cache of existing RCIOItems, used for uniquing
-static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
+static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	NSCAssert(block != nil, @"Passed nil block to accessItemCache");
-	static NSMutableDictionary *itemCache = nil;
+	static RCIOWeakDictionary *itemCache = nil;
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
-		itemCache = [NSMutableDictionary dictionary];
+		itemCache = [RCIOWeakDictionary dictionary];
 	});
 	
 	@synchronized(itemCache) {
@@ -68,7 +69,7 @@ static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			__block RCIOItem *item = nil;
-			accessItemCache(^(NSMutableDictionary *itemCache) {
+			accessItemCache(^(RCIOWeakDictionary *itemCache) {
 				item = itemCache[url];
 				if (item != nil) return;
 				if ([NSFileManager.defaultManager fileExistsAtPath:url.path]) {
@@ -158,7 +159,7 @@ static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
 	
 	NSURL *url = self.urlBacking;
 	__block RCIODirectory *parent = nil;
-	accessItemCache(^(NSMutableDictionary *itemCache) {
+	accessItemCache(^(RCIOWeakDictionary *itemCache) {
 		parent = itemCache[url.URLByDeletingLastPathComponent];
 	});
 	[parent didAddItem:self];
@@ -170,7 +171,7 @@ static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
 	NSURL *fromURL = self.urlBacking;
 	__block RCIODirectory *fromParent = nil;
 	__block RCIODirectory *toParent = nil;
-	accessItemCache(^(NSMutableDictionary *itemCache) {
+	accessItemCache(^(RCIOWeakDictionary *itemCache) {
 		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent];
 		toParent = itemCache[url.URLByDeletingLastPathComponent];
 		[itemCache removeObjectForKey:fromURL];
@@ -185,7 +186,7 @@ static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
 	
 	__block RCIODirectory *toParent = nil;
-	accessItemCache(^(NSMutableDictionary *itemCache) {
+	accessItemCache(^(RCIOWeakDictionary *itemCache) {
 		toParent = itemCache[url.URLByDeletingLastPathComponent];
 		itemCache[url] = self;
 	});
@@ -197,7 +198,7 @@ static void accessItemCache(void (^block)(NSMutableDictionary *itemCache)) {
 
 	NSURL *fromURL = self.urlBacking;
 	__block RCIODirectory *fromParent =nil;
-	accessItemCache(^(NSMutableDictionary *itemCache) {
+	accessItemCache(^(RCIOWeakDictionary *itemCache) {
 		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent];
 		[itemCache removeObjectForKey:fromURL];
 		self.urlBacking = nil;

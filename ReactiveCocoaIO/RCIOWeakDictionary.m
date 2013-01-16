@@ -46,12 +46,18 @@
 		RCIOWeakWrapper *wrapper = [RCIOWeakWrapper wrapperWithValue:obj];
 		[obj rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 			@strongify(self);
-			@synchronized(self) {
+			@synchronized (self) {
 				if (wrapper == [self->_backing objectForKey:key]) [self->_backing removeObjectForKey:key];
 			}
 		}]];
 		_backing[key] = wrapper;
 	}
+}
+
+- (void)removeObjectForKey:(id)key {
+	@synchronized (self) {
+		[_backing removeObjectForKey:key];
+	};
 }
 
 @end
