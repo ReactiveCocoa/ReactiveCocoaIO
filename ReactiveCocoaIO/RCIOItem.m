@@ -32,6 +32,7 @@ RACScheduler *currentScheduler() {
 
 // Access the cache of existing RCIOItems, used for uniquing
 static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
+	ASSERT_FILE_SYSTEM_SCHEDULER();
 	NSCAssert(block != nil, @"Passed nil block to accessItemCache");
 	static RCIOWeakDictionary *itemCache = nil;
 	static dispatch_once_t onceToken;

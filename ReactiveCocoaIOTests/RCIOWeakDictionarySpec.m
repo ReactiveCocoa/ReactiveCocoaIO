@@ -33,6 +33,7 @@ describe(@"RCIOWeakDictionary", ^{
 				deallocd = YES;
 			}]];
 			dictionary[key] = object;
+			expect(dictionary[key]).to.beIdenticalTo(object);
 		}
 		
 		expect(deallocd).will.beTruthy();

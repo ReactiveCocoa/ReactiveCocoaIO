@@ -40,14 +40,17 @@
 
 - (void)setObject:(id)obj forKeyedSubscript:(id)key {
 	NSParameterAssert(obj != nil);
-	@weakify(self);
 	
 	@synchronized (self) {
 		RCIOWeakWrapper *wrapper = [RCIOWeakWrapper wrapperWithValue:obj];
+		@weakify(self, wrapper);
+		
 		[obj rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-			@strongify(self);
+			@strongify(self, wrapper);
+			if (self == nil || wrapper == nil) return;
+			
 			@synchronized (self) {
-				if (wrapper == [self->_backing objectForKey:key]) [self->_backing removeObjectForKey:key];
+				if (wrapper == self->_backing[key]) [self->_backing removeObjectForKey:key];
 			}
 		}]];
 		_backing[key] = wrapper;
