@@ -216,8 +216,39 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	});
 	
 	describe(@"extended attributes", ^{
-		xit(@"should save and load extended attributes", ^{
+		it(@"should save and load extended attributes", ^{
+			__block BOOL deallocd = NO;
+			NSString *attributeKey = @"key";
+			NSString *attributeValue = @"value";
+			__block NSString *receivedAttribute = nil;
 			
+			@autoreleasepool {
+				// Keep a reference to item or it'll deallocate before the attribute value is received
+				__block RCIOItem *item __attribute__((objc_precise_lifetime)) = nil;
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
+					item = x;
+					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+						deallocd = YES;
+					}]];
+					RACPropertySubject *attributeSubject __attribute__((objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:attributeKey];
+					[attributeSubject subscribeNext:^(id x) {
+						receivedAttribute = x;
+					}];
+					[attributeSubject sendNext:attributeValue];
+				}];
+				expect(receivedAttribute).will.equal(attributeValue);
+			}
+			
+			expect(deallocd).will.beTruthy();
+			receivedAttribute = nil;
+			
+			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				[[x extendedAttributeSubjectForKey:attributeKey] subscribeNext:^(id x) {
+					receivedAttribute = x;
+				}];
+			}];
+			
+			expect(receivedAttribute).will.equal(attributeValue);
 		});
 	});
 	
@@ -227,7 +258,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
 					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
 					}]];
@@ -245,7 +276,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
 					RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:@"key"];
 					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
@@ -265,7 +296,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
 				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *item) {
-					[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent) {
+					[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent __attribute__((objc_precise_lifetime))) {
 						[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 							parentDeallocd = YES;
 						}]];
@@ -285,13 +316,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				__block BOOL finishedGettingChildren = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *x) {
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *x __attribute__((objc_precise_lifetime))) {
 					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
 					}]];
 					[[[x parentSignal] take:1] subscribeNext:^(RCIODirectory *y) {
 						parent = y;
-						[[[y childrenSignal] take:1] subscribeNext:^(NSArray *children) {
+						[[[y childrenSignal] take:1] subscribeNext:^(NSArray *children __attribute__((objc_precise_lifetime))) {
 							expect(children.count).to.beGreaterThan(0);
 							finishedGettingChildren = YES;
 						}];
