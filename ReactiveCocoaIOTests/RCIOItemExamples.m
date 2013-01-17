@@ -181,11 +181,10 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	describe(@"memory management", ^{
 		it(@"should deallocate normally", ^{
 			__block BOOL deallocd = NO;
-			NSURL *url = [testRootDirectory URLByAppendingPathComponent:@"test"];
 			
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:url] subscribeNext:^(id x) {
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
 					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
 					}]];
@@ -203,12 +202,14 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
-				[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent) {
-					[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						parentDeallocd = YES;
-					}]];
-				} completed:^{
-					disposableAttached = YES;
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *item) {
+					[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent) {
+						[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+							parentDeallocd = YES;
+						}]];
+					} completed:^{
+						disposableAttached = YES;
+					}];
 				}];
 				expect(disposableAttached).will.beTruthy();
 			}
