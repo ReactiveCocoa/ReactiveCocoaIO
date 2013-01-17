@@ -53,13 +53,11 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 
 - (RACSignal *)childrenSignalWithOptions:(NSDirectoryEnumerationOptions)options {
 	NSParameterAssert(!(options & NSDirectoryEnumerationSkipsPackageDescendants));
-	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		CANCELLATION_DISPOSABLE(disposable);
 		
 		[disposable addDisposable:[fileSystemScheduler() schedule:^{
-			@strongify(self);
 			
 			RACSubject *childrenChannel = self.childrenChannel;
 			if (childrenChannel == nil) {
@@ -67,7 +65,9 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 				self.childrenChannel = childrenChannel;
 			}
 			
-			[disposable addDisposable:[[[childrenChannel scanWithStart:[self loadChildren] combine:^id(NSMutableArray *children, RACTuple *change) {
+			NSArray *children = [self loadChildren];
+			
+			[disposable addDisposable:[[[[childrenChannel scanWithStart:children combine:^id(NSMutableArray *children, RACTuple *change) {
 				RACTupleUnpack(NSString *type, RCIOItem *item) = change;
 				
 				if (type == RCIODirectoryChangeTypeAdd) {
@@ -77,7 +77,7 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 				}
 				
 				return children;
-			}] map:^ NSArray * (NSArray *content) {
+			}] startWith:children] map:^ NSArray * (NSArray *content) {
 				IF_CANCELLED_RETURN(@[]);
 				
 				NSMutableArray *processedContent = [NSMutableArray arrayWithCapacity:content.count];

@@ -51,7 +51,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 // names.
 //
 // Must be accessed while synchronized on self.
-@property (nonatomic, strong, readonly) NSMutableDictionary *extendedAttributesBacking;
+@property (nonatomic, strong, readonly) RCIOWeakDictionary *extendedAttributesBacking;
 
 @end
 
@@ -223,11 +223,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 @implementation RCIOItem (FileManagement)
 
 - (RACSignal *)moveTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			@strongify(self);
 			
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = [destination.urlBacking URLByAppendingPathComponent:newName ?: url.lastPathComponent];
@@ -248,11 +246,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)copyTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			@strongify(self);
 			
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = [destination.urlBacking URLByAppendingPathComponent:newName ?: url.lastPathComponent];
@@ -286,11 +282,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)duplicate {
-	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			@strongify(self);
 			
 			NSURL *url = self.urlBacking;
 			NSUInteger duplicateCount = 1;
@@ -315,11 +309,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)delete {
-	@weakify(self);
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			@strongify(self);
 			
 			NSURL *url = self.urlBacking;
 			NSError *error = nil;
@@ -340,7 +332,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 @implementation RCIOItem (ExtendedAttributes)
 
 - (RACPropertySubject *)extendedAttributeSubjectForKey:(NSString *)key {
-	@weakify(self);
 	
 	@synchronized (self) {
 		RACPropertySubject *subject = self.extendedAttributesBacking[key];
@@ -350,14 +341,12 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		
 		// Load the initial value from the file system
 		[fileSystemScheduler() schedule:^{
-			@strongify(self);
 			id value = [self loadXattrValueForKey:key];
 			if (value)[subject sendNext:value];
 		}];
 		
 		// Save the value to disk every time it changes
 		[[subject deliverOn:fileSystemScheduler()] subscribeNext:^(id value) {
-			@strongify(self);
 			[self saveXattrValue:value forKey:key];
 		}];
 		
