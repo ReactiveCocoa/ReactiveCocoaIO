@@ -215,6 +215,12 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		});
 	});
 	
+	describe(@"extended attributes", ^{
+		xit(@"should save and load extended attributes", ^{
+			
+		});
+	});
+	
 	describe(@"memory management", ^{
 		it(@"should deallocate normally", ^{
 			__block BOOL deallocd = NO;
@@ -222,6 +228,25 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			@autoreleasepool {
 				__block BOOL disposableAttached = NO;
 				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+						deallocd = YES;
+					}]];
+				} completed:^{
+					disposableAttached = YES;
+				}];
+				expect(disposableAttached).will.beTruthy();
+			}
+			
+			expect(deallocd).will.beTruthy();
+		});
+		
+		it(@"should deallocate even if an extended attribute interface has been created", ^{
+			__block BOOL deallocd = NO;
+			
+			@autoreleasepool {
+				__block BOOL disposableAttached = NO;
+				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+					RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:@"key"];
 					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
 					}]];
