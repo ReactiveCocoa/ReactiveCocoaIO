@@ -13,6 +13,7 @@
 #import "RCIODirectory+Private.h"
 #import "RCIOFile.h"
 #import "RCIOWeakDictionary.h"
+//#import "../External/ReactiveCocoa/ReactiveCocoaFramework/ReactiveCocoa/RACPropertySubject+Private.h"
 
 // Scheduler for serializing accesses to the file system
 RACScheduler *fileSystemScheduler() {
@@ -336,23 +337,37 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 @implementation RCIOItem (ExtendedAttributes)
 
 - (RACPropertySubject *)extendedAttributeSubjectForKey:(NSString *)key {
+	@weakify(self);
 	
 	@synchronized (self) {
 		RACPropertySubject *subject = self.extendedAttributesBacking[key];
 		if (subject != nil) return subject;
 		
-		subject = [RACPropertySubject property];
+		RACReplaySubject *backing = [RACReplaySubject replaySubjectWithCapacity:1];
 		
 		// Load the initial value from the file system
 		[fileSystemScheduler() schedule:^{
+			@strongify(self);
+			if (self == nil) return;
 			id value = [self loadXattrValueForKey:key];
-			if (value)[subject sendNext:value];
+			[backing sendNext:[RACTuple tupleWithObjects:value, nil]];
 		}];
 		
-		// Save the value to disk every time it changes
-		[[subject deliverOn:fileSystemScheduler()] subscribeNext:^(id value) {
-			[self saveXattrValue:value forKey:key];
+		RACSignal *subjectSignal = [backing subscribeOn:fileSystemScheduler()];
+		RACSubscriber *subjectSubscriber = [RACSubscriber subscriberWithNext:^(RACTuple *tuple) {
+			[fileSystemScheduler() schedule:^{
+				@strongify(self);
+				if (self == nil) return;
+				[self saveXattrValue:tuple.first forKey:key];
+				[backing sendNext:tuple];
+			}];
+		} error:^(NSError *error) {
+			[backing sendError:error];
+		} completed:^{
+			[backing sendCompleted];
 		}];
+		
+		subject = [[RACPropertySubject alloc] performSelector:@selector(initWithSignal:subscriber:) withObject:subjectSignal withObject:subjectSubscriber];
 		
 		self.extendedAttributesBacking[key] = subject;
 		return subject;
