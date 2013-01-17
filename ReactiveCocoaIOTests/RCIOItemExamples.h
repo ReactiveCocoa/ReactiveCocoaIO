@@ -10,4 +10,10 @@
 extern NSString * const RCIOItemExamples;
 
 // Class
+// The RCIOItem subclass to test.
 extern NSString * const RCIOItemExampleClass;
+
+// void (^)(NSURL *)
+// A block that creates an item on the filesystem suitable to be loaded by the
+// subclass.
+extern NSString * const RCIOItemExampleBlock;

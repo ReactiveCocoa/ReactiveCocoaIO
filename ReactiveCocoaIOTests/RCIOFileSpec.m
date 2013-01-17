@@ -11,7 +11,7 @@
 SpecBegin(RCIOFile)
 
 describe(@"RCIOFile", ^{
-	itShouldBehaveLike(RCIOItemExamples, @{ RCIOItemExampleClass: RCIOFile.class });
+	itShouldBehaveLike(RCIOItemExamples, @{ RCIOItemExampleClass: RCIOFile.class, RCIOItemExampleBlock: [^(NSURL *url){ [@"" writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:NULL]; } copy] });
 });
 
 SpecEnd
