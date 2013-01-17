@@ -353,7 +353,15 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			[backing sendNext:[RACTuple tupleWithObjects:value, nil]];
 		}];
 		
-		RACSignal *subjectSignal = [backing subscribeOn:fileSystemScheduler()];
+		RACSignal *subjectSignal = [RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
+			RACScheduler *callingScheduler = RACScheduler.currentScheduler;
+			RACCompoundDisposable *disposable = [RACCompoundDisposable compoundDisposable];
+			[disposable addDisposable:[fileSystemScheduler() schedule:^{
+				[disposable addDisposable:[[backing deliverOn:callingScheduler] subscribe:subscriber]];
+			}]];
+			return disposable;
+		}];
+		
 		RACSubscriber *subjectSubscriber = [RACSubscriber subscriberWithNext:^(RACTuple *tuple) {
 			[fileSystemScheduler() schedule:^{
 				@strongify(self);
