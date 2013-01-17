@@ -71,7 +71,10 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 				RACTupleUnpack(NSString *type, RCIOItem *item) = change;
 				
 				if (type == RCIODirectoryChangeTypeAdd) {
-					[children addObject:item];
+					NSUInteger index = [children indexOfObject:item inSortedRange:NSMakeRange(0, children.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(RCIOItem *item1, RCIOItem *item2) {
+						return [item1.urlBacking.lastPathComponent localizedStandardCompare:item2.urlBacking.lastPathComponent];
+					}];
+					[children insertObject:item atIndex:index];
 				} else {
 					[children removeObject:item];
 				}
