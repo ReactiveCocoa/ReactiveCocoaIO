@@ -54,15 +54,12 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				item = x;
 			} error:^(NSError *error) {
 				errored = YES;
-			} completed:^{
-				completed = YES;
 			}];
 			
-			expect(item).will.beNil();
 			expect(errored).will.beTruthy();
 			// Reset error before the after block
 			errored = NO;
-			expect(completed).will.beFalsy();
+			expect(item).will.beNil();
 		});
 		
 		it(@"should return an item that does exist", ^{
@@ -112,6 +109,46 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			expect(item).willNot.beNil();
 			expect(completed).will.beTruthy();
+		});
+		
+		it(@"should not load an item if RCIOItemModeExclusiveAccess is specified", ^{
+			createItemAtURL(itemURL);
+			expect(itemExistsAtURL(itemURL)).to.beTruthy();
+			
+			[[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] subscribeNext:^(id x) {
+				item = x;
+			} error:^(NSError *error) {
+				errored = YES;
+			}];
+			
+			expect(errored).will.beTruthy();
+			// Reset error before the after block
+			errored = NO;
+			expect(item).will.beNil();
+		});
+		
+		it(@"should not load an item if RCIOItemModeExclusiveAccess is specified even if it was loaded before", ^{
+			createItemAtURL(itemURL);
+			expect(itemExistsAtURL(itemURL)).to.beTruthy();
+			
+			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				item = x;
+			}];
+			
+			expect(item).willNot.beNil();
+			
+			__block RCIOItem *item2 = nil;
+			
+			[[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] subscribeNext:^(id x) {
+				item2 = x;
+			} error:^(NSError *error) {
+				errored = YES;
+			}];
+			
+			expect(errored).will.beTruthy();
+			// Reset error before the after block
+			errored = NO;
+			expect(item2).will.beNil();
 		});
 		
 		it(@"should delete an item", ^{
