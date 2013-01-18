@@ -150,30 +150,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			errored = NO;
 			expect(item2).will.beNil();
 		});
-		
-		it(@"should delete an item", ^{
-			__block RCIOItem *deletedItem = nil;
-			
-			createItemAtURL(itemURL);
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
-			
-			expect(item).willNot.beNil();
-			
-			[[item delete] subscribeNext:^(id x) {
-				deletedItem = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			} completed:^{
-				completed = YES;
-			}];
-			
-			expect(deletedItem).will.beIdenticalTo(item);
-			expect(completed).will.beTruthy();
-			expect(itemExistsAtURL(itemURL)).will.beFalsy();
-		});
-		
+				
 		describe(@"after being created", ^{
 			
 			before(^{
@@ -212,6 +189,31 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(matchedItem).will.beIdenticalTo(item);
 			});
+		});
+	});
+	
+	describe(@"file management", ^{
+		it(@"should delete an item", ^{
+			__block RCIOItem *deletedItem = nil;
+			
+			createItemAtURL(itemURL);
+			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				item = x;
+			}];
+			
+			expect(item).willNot.beNil();
+			
+			[[item delete] subscribeNext:^(id x) {
+				deletedItem = x;
+			} error:^(NSError *error) {
+				errored = YES;
+			} completed:^{
+				completed = YES;
+			}];
+			
+			expect(deletedItem).will.beIdenticalTo(item);
+			expect(completed).will.beTruthy();
+			expect(itemExistsAtURL(itemURL)).will.beFalsy();
 		});
 	});
 	
