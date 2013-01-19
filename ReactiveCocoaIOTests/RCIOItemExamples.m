@@ -589,15 +589,30 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				});
 				
 				it(@"should not let the source directory of a move react", ^{
+					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
+						overwriteFailed = YES;
+					}];
 					
+					expect(overwriteFailed).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
 				});
 				
 				it(@"should not let the destination directory of a copy react", ^{
+					[[item copyTo:directory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
+						overwriteFailed = YES;
+					}];
 					
+					expect(overwriteFailed).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
+					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
+						overwriteFailed = YES;
+					}];
 					
+					expect(overwriteFailed).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
 				});
 			});
 			
