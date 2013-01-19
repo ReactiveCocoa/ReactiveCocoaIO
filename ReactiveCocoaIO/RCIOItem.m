@@ -71,6 +71,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			__block RCIOItem *item = nil;
+			
 			accessItemCache(^(RCIOWeakDictionary *itemCache) {
 				if ([NSFileManager.defaultManager fileExistsAtPath:url.path]) {
 					if (mode & RCIOItemModeExclusiveAccess) {
@@ -231,7 +232,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = url;
 
@@ -265,7 +265,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = url;
 			
@@ -311,7 +310,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			
 			NSURL *url = self.urlBacking;
 			NSUInteger duplicateCount = 1;
 			NSURL *destinationURL = nil;
@@ -338,7 +336,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
-			
 			NSURL *url = self.urlBacking;
 			NSError *error = nil;
 			

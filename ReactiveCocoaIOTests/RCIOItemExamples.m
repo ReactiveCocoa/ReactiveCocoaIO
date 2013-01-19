@@ -231,7 +231,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url).to.equal(newItemURL);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -249,7 +249,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url).to.equal(newItemURL);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -268,7 +268,49 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url).to.equal(newItemURL);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should not overwrite an item if not asked to", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				createItemAtURL(newItemURL);
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				
+				[[item moveTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(errored).will.beTruthy();
+				// Reset errored before the after block
+				errored = NO;
+				expect(receivedItem).will.beNil();
+				expect(completed).will.beFalsy();
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+			});
+
+			it(@"should overwrite an item if asked to", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				createItemAtURL(newItemURL);
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				
+				[[item moveTo:directory withName:nil replaceExisting:YES] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).will.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
