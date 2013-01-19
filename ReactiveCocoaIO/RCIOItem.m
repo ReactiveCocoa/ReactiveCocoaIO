@@ -229,7 +229,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 @implementation RCIOItem (FileManagement)
 
 - (RACSignal *)moveTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *url = self.urlBacking;
@@ -262,7 +261,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)copyTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *url = self.urlBacking;
@@ -286,9 +284,15 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 					return;
 				}
 			}
+
+			RCIOItem *item = [RCIOItem loadItemFromURL:destinationURL];
+			if (item == nil) {
+				[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+				return;
+			}
 			
-			[self didCopyToURL:destinationURL];
-			[subscriber sendNext:self];
+			[item didCopyToURL:destinationURL];
+			[subscriber sendNext:item];
 			[subscriber sendCompleted];
 		}];
 	}] deliverOn:currentScheduler()];
@@ -307,7 +311,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)duplicate {
-	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *url = self.urlBacking;
@@ -333,7 +336,6 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)delete {
-	
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *url = self.urlBacking;

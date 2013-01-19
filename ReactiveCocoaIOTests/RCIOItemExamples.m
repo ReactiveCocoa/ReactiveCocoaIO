@@ -316,6 +316,114 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			});
 		});
 		
+		describe(@"copying", ^{
+			it(@"should copy an item to a different directory with a different name", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+				
+				[[item copyTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).willNot.beNil();
+				expect(receivedItem).toNot.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should copy an item to a different directory", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				
+				[[item copyTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).willNot.beNil();
+				expect(receivedItem).toNot.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should copy an item with a different name", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [testRootDirectory URLByAppendingPathComponent:newName];
+				
+				[[item copyTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).willNot.beNil();
+				expect(receivedItem).toNot.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should not overwrite an item if not asked to", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				createItemAtURL(newItemURL);
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				
+				[[item copyTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(errored).will.beTruthy();
+				// Reset errored before the after block
+				errored = NO;
+				expect(receivedItem).will.beNil();
+				expect(completed).will.beFalsy();
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+			});
+			
+			it(@"should overwrite an item if asked to", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				createItemAtURL(newItemURL);
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				
+				[[item copyTo:directory withName:nil replaceExisting:YES] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).willNot.beNil();
+				expect(receivedItem).toNot.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+		});
+		
 		it(@"should delete an item", ^{
 			__block RCIOItem *deletedItem = nil;
 			
