@@ -454,9 +454,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		
 		__block NSURL *directoryURL;
 		__block RCIODirectory *directory;
-		__block NSMutableArray *directoryChildrenURLs;
+		__block NSArray *directoryChildrenURLs;
 		__block RACDisposable *directoryChildrenDisposable;
-		__block NSArray *(^childrenURLsWithUpdates)(NSArray *);
 		
 		__block RCIODirectory *testRootDirectory;
 		
@@ -481,7 +480,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				for (RCIOItem *child in children) {
 					[childrenURLs addObject:child.url];
 				}
-				[directoryChildrenURLs addObject:childrenURLs];
+				directoryChildrenURLs = childrenURLs;
 			}];
 			
 			[[RCIODirectory itemWithURL:testRootDirectoryURL] subscribeNext:^(id x) {
@@ -495,9 +494,6 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			expect(overwriteTarget).willNot.beNil();
 			
-			childrenURLsWithUpdates = ^(NSArray *updates) {
-				return [@[ @[], @[ overwriteTargetURL ] ] arrayByAddingObjectsFromArray:updates];
-			};
 		});
 		
 		after(^{
@@ -522,7 +518,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(newItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, newItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, newItemURL ]));
 		});
 		
 		it(@"should let the destination directory of a move react", ^{
@@ -534,7 +530,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, movedItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, movedItemURL ]));
 		});
 		
 		it(@"should let the source directory of a move react", ^{
@@ -545,7 +541,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[] ]));
+			expect(directoryChildrenURLs).will.equal(@[]);
 		});
 		
 		it(@"should let the destination directory of a copy react", ^{
@@ -557,7 +553,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, copiedItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, copiedItemURL ]));
 		});
 		
 		it(@"should not let the source directory of a copy react", ^{
@@ -568,14 +564,14 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[]));
+			expect(directoryChildrenURLs).will.equal(@[ overwriteTargetURL ]);
 		});
 		
 		describe(@"on collisions", ^{
 			describe(@"when not overwriting", ^{
-				__block BOOL overwriteFailed = NO;
+				__block BOOL overwriteFailed;
 				
-				after(^{
+				before(^{
 					overwriteFailed = NO;
 				});
 				
@@ -585,7 +581,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 				
 				it(@"should not let the source directory of a move react", ^{
@@ -594,7 +590,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 				
 				it(@"should not let the destination directory of a copy react", ^{
@@ -603,7 +599,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
@@ -612,13 +608,24 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 			});
 			
 			describe(@"when overwriting", ^{
+				__block BOOL overwriteCompleted;
+				
+				before(^{
+					overwriteCompleted = NO;
+				});
+				
 				it(@"should let the destination directory of a move react", ^{
+					[[item moveTo:directory withName:nil replaceExisting:YES] subscribeCompleted:^{
+						overwriteCompleted = YES;
+					}];
 					
+					expect(overwriteCompleted).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 				
 				it(@"should let the source directory of a move react", ^{
@@ -630,7 +637,12 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
+					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:YES] subscribeCompleted:^{
+						overwriteCompleted = YES;
+					}];
 					
+					expect(overwriteCompleted).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 			});
 		});
