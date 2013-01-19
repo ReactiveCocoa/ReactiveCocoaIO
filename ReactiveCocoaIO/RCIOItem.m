@@ -201,7 +201,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 
 - (void)didDelete {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
-
+	
 	NSURL *fromURL = self.urlBacking;
 	__block RCIODirectory *fromParent =nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
@@ -209,7 +209,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		[itemCache removeObjectForKey:fromURL.URLByResolvingSymlinksInPath];
 		self.urlBacking = nil;
 	});
-	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];	
+	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
 }
 
 #pragma mark NSObject
@@ -233,19 +233,30 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		return [fileSystemScheduler() schedule:^{
 			
 			NSURL *url = self.urlBacking;
-			NSURL *destinationURL = [destination.urlBacking URLByAppendingPathComponent:newName ?: url.lastPathComponent];
-			NSError *error = nil;
+			NSURL *destinationURL = url;
+
+			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
 			
-			if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-				[NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error];
+			if (![url isEqual:destinationURL]) {
+				NSError *error = nil;
+				
+				if (url == nil) {
+					[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+					return;
+				}
+				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
+					[NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error];
+				}
+				if (![NSFileManager.defaultManager moveItemAtURL:url toURL:destinationURL error:&error]) {
+					[subscriber sendError:error];
+					return;
+				}
 			}
-			if (![NSFileManager.defaultManager moveItemAtURL:url toURL:destinationURL error:&error]) {
-				[subscriber sendError:error];
-			} else {
-				[self didMoveToURL:destinationURL];
-				[subscriber sendNext:self];
-				[subscriber sendCompleted];
-			}
+			
+			[self didMoveToURL:destinationURL];
+			[subscriber sendNext:self];
+			[subscriber sendCompleted];
 		}];
 	}] deliverOn:currentScheduler()];
 }
@@ -256,20 +267,30 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		return [fileSystemScheduler() schedule:^{
 			
 			NSURL *url = self.urlBacking;
-			NSURL *destinationURL = [destination.urlBacking URLByAppendingPathComponent:newName ?: url.lastPathComponent];
-			NSError *error = nil;
+			NSURL *destinationURL = url;
 			
-			if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-				[NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error];
+			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
+			
+			if (![url isEqual:destinationURL]) {
+				NSError *error = nil;
+				
+				if (url == nil) {
+					[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+					return;
+				}
+				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
+					[NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error];
+				}
+				if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
+					[subscriber sendError:error];
+					return;
+				}
 			}
-			if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
-				[subscriber sendError:error];
-			} else {
-				RCIOItem *copy = [[self.class alloc] initWithURL:destinationURL];
-				[copy didCopyToURL:destinationURL];
-				[subscriber sendNext:copy];
-				[subscriber sendCompleted];
-			}
+			
+			[self didCopyToURL:destinationURL];
+			[subscriber sendNext:self];
+			[subscriber sendCompleted];
 		}];
 	}] deliverOn:currentScheduler()];
 }
@@ -415,4 +436,3 @@ static size_t _xattrMaxSize = 4 * 1024; // 4 kB
 }
 
 @end
-
