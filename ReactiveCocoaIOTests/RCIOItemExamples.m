@@ -523,6 +523,33 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			expect(movedItem).willNot.beNil();
 			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ], @[] ]));
 		});
+		
+		it(@"should let the destination directory of a copy react to the copy", ^{
+			NSString *newName = @"newName";
+			NSURL *copiedItemURL = [directoryURL URLByAppendingPathComponent:newName];
+			__block RCIOItem *copiedItem = nil;
+			
+			[[item copyTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+				copiedItem = x;
+			}];
+			
+			expect(copiedItem).willNot.beNil();
+			expect(directoryChildrenURLs).will.equal((@[ @[], @[ copiedItemURL ] ]));
+		});
+		
+		it(@"should not let the source directory of a copy react to the copy", ^{
+			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+			__block RCIOItem *copiedItem = nil;
+			
+			[[[RACSignal zip:@[ [RCIOItemSubclass itemWithURL:newItemURL], [RCIODirectory itemWithURL:testRootDirectory] ] reduce:^(RCIOItem *newItem, RCIODirectory *testRoot) {
+				return [newItem copyTo:testRoot withName:@"movedItemName" replaceExisting:NO];
+			}] flatten] subscribeNext:^(id x) {
+				copiedItem = x;
+			}];
+			
+			expect(copiedItem).willNot.beNil();
+			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ] ]));
+		});
 	});
 	
 	describe(@"extended attributes", ^{
