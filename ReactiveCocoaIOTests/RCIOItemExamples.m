@@ -496,6 +496,33 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			expect(newItem).willNot.beNil();
 			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ] ]));
 		});
+		
+		it(@"should let the destination directory of a move react to the move", ^{
+			NSString *newName = @"newName";
+			NSURL *movedItemURL = [directoryURL URLByAppendingPathComponent:newName];
+			__block RCIOItem *movedItem = nil;
+			
+			[[item moveTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+				movedItem = x;
+			}];
+			
+			expect(movedItem).willNot.beNil();
+			expect(directoryChildrenURLs).will.equal((@[ @[], @[ movedItemURL ] ]));
+		});
+		
+		it(@"should let the source directory of a move react to the move", ^{
+			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+			__block RCIOItem *movedItem = nil;
+			
+			[[[RACSignal zip:@[ [RCIOItemSubclass itemWithURL:newItemURL], [RCIODirectory itemWithURL:testRootDirectory] ] reduce:^(RCIOItem *newItem, RCIODirectory *testRoot) {
+				return [newItem moveTo:testRoot withName:@"movedItemName" replaceExisting:NO];
+			}] flatten] subscribeNext:^(id x) {
+				movedItem = x;
+			}];
+			
+			expect(movedItem).willNot.beNil();
+			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ], @[] ]));
+		});
 	});
 	
 	describe(@"extended attributes", ^{
