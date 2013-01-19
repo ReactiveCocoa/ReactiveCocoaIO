@@ -553,7 +553,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			receivedAttribute = nil;
 			
 			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				[[x extendedAttributeSubjectForKey:attributeKey] subscribeNext:^(id x) {
+				item = x;
+				[[item extendedAttributeSubjectForKey:attributeKey] subscribeNext:^(id x) {
 					receivedAttribute = x;
 				}];
 			}];
