@@ -24,26 +24,26 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	Class RCIOItemSubclass = data[RCIOItemExampleClass];
 	void (^createItemAtURL)(NSURL *) = data[RCIOItemExampleBlock];
 	
-	__block NSURL *testRootDirectory;
+	__block NSURL *testRootDirectoryURL;
 	__block NSURL *itemURL;
 	__block RCIOItem *item;
 	__block BOOL errored;
 	__block BOOL completed;
 	
 	before(^{
-		testRootDirectory = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
-		itemURL = [testRootDirectory URLByAppendingPathComponent:@"item"];
+		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
+		itemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
 		item = nil;
 		errored = NO;
 		completed = NO;
 		
-		[NSFileManager.defaultManager createDirectoryAtURL:testRootDirectory withIntermediateDirectories:YES attributes:nil error:NULL];
+		[NSFileManager.defaultManager createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 	});
 	
 	after(^{
 		expect(errored).to.beFalsy();
 		
-		[NSFileManager.defaultManager removeItemAtURL:testRootDirectory error:NULL];
+		[NSFileManager.defaultManager removeItemAtURL:testRootDirectoryURL error:NULL];
 	});
 	
 	describe(@"RCIOItem", ^{
@@ -203,7 +203,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			expect(item).willNot.beNil();
 			
-			directoryURL = [testRootDirectory URLByAppendingPathComponent:@"directory"];
+			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
 			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
 				directory = x;
 			}];
@@ -256,7 +256,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			it(@"should rename an item", ^{
 				NSString *newName = @"newName";
-				NSURL *newItemURL = [testRootDirectory URLByAppendingPathComponent:newName];
+				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
 				
 				[[item moveTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
 					receivedItem = x;
@@ -360,7 +360,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			it(@"should copy an item with a different name", ^{
 				NSString *newName = @"newName";
-				NSURL *newItemURL = [testRootDirectory URLByAppendingPathComponent:newName];
+				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
 				
 				[[item copyTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
 					receivedItem = x;
@@ -450,10 +450,18 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	});
 	
 	describe(@"reactions", ^{
-		__block NSURL *directoryURL = nil;
-		__block RCIODirectory *directory = nil;
-		__block NSMutableArray *directoryChildrenURLs = nil;
-		__block RACDisposable *directoryChildrenDisposable = nil;
+		NSString *newName = @"newName";
+		
+		__block NSURL *directoryURL;
+		__block RCIODirectory *directory;
+		__block NSMutableArray *directoryChildrenURLs;
+		__block RACDisposable *directoryChildrenDisposable;
+		__block NSArray *(^childrenURLsWithUpdates)(NSArray *);
+		
+		__block RCIODirectory *testRootDirectory;
+		
+		__block NSURL *overwriteTargetURL = nil;
+		__block RCIOItem *overwriteTarget = nil;
 		
 		before(^{
 			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
@@ -461,7 +469,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			expect(item).willNot.beNil();
 			
-			directoryURL = [testRootDirectory URLByAppendingPathComponent:@"directory"];
+			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
 			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
 				directory = x;
 			}];
@@ -475,6 +483,21 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				}
 				[directoryChildrenURLs addObject:childrenURLs];
 			}];
+			
+			[[RCIODirectory itemWithURL:testRootDirectoryURL] subscribeNext:^(id x) {
+				testRootDirectory = x;
+			}];
+			expect(testRootDirectory).willNot.beNil();
+			
+			overwriteTargetURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+			[[RCIOItemSubclass itemWithURL:overwriteTargetURL] subscribeNext:^(id x) {
+				overwriteTarget = x;
+			}];
+			expect(overwriteTarget).willNot.beNil();
+			
+			childrenURLsWithUpdates = ^(NSArray *updates) {
+				return [@[ @[], @[ overwriteTargetURL ] ] arrayByAddingObjectsFromArray:updates];
+			};
 		});
 		
 		after(^{
@@ -483,10 +506,15 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			directoryChildrenURLs = nil;
 			[directoryChildrenDisposable dispose];
 			directoryChildrenDisposable = nil;
+			
+			testRootDirectory = nil;
+			
+			overwriteTargetURL = nil;
+			overwriteTarget = nil;
 		});
 		
 		it(@"should let it's parent react to it's creation", ^{
-			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
 			__block RCIOItem *newItem = nil;
 			
 			[[RCIOItemSubclass itemWithURL:newItemURL] subscribeNext:^(id x) {
@@ -494,11 +522,10 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(newItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, newItemURL ] ]));
 		});
 		
-		it(@"should let the destination directory of a move react to the move", ^{
-			NSString *newName = @"newName";
+		it(@"should let the destination directory of a move react", ^{
 			NSURL *movedItemURL = [directoryURL URLByAppendingPathComponent:newName];
 			__block RCIOItem *movedItem = nil;
 			
@@ -507,25 +534,21 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ @[], @[ movedItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, movedItemURL ] ]));
 		});
 		
-		it(@"should let the source directory of a move react to the move", ^{
-			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+		it(@"should let the source directory of a move react", ^{
 			__block RCIOItem *movedItem = nil;
 			
-			[[[RACSignal zip:@[ [RCIOItemSubclass itemWithURL:newItemURL], [RCIODirectory itemWithURL:testRootDirectory] ] reduce:^(RCIOItem *newItem, RCIODirectory *testRoot) {
-				return [newItem moveTo:testRoot withName:@"movedItemName" replaceExisting:NO];
-			}] flatten] subscribeNext:^(id x) {
+			[[overwriteTarget moveTo:testRootDirectory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
 				movedItem = x;
 			}];
 			
 			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ], @[] ]));
+			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[] ]));
 		});
 		
-		it(@"should let the destination directory of a copy react to the copy", ^{
-			NSString *newName = @"newName";
+		it(@"should let the destination directory of a copy react", ^{
 			NSURL *copiedItemURL = [directoryURL URLByAppendingPathComponent:newName];
 			__block RCIOItem *copiedItem = nil;
 			
@@ -534,21 +557,67 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ @[], @[ copiedItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[ @[ overwriteTargetURL, copiedItemURL ] ]));
 		});
 		
-		it(@"should not let the source directory of a copy react to the copy", ^{
-			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+		it(@"should not let the source directory of a copy react", ^{
 			__block RCIOItem *copiedItem = nil;
 			
-			[[[RACSignal zip:@[ [RCIOItemSubclass itemWithURL:newItemURL], [RCIODirectory itemWithURL:testRootDirectory] ] reduce:^(RCIOItem *newItem, RCIODirectory *testRoot) {
-				return [newItem copyTo:testRoot withName:@"movedItemName" replaceExisting:NO];
-			}] flatten] subscribeNext:^(id x) {
+			[[overwriteTarget copyTo:testRootDirectory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
 				copiedItem = x;
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ] ]));
+			expect(directoryChildrenURLs).will.equal(childrenURLsWithUpdates(@[]));
+		});
+		
+		describe(@"on collisions", ^{
+			describe(@"when not overwriting", ^{
+				__block BOOL overwriteFailed = NO;
+				
+				after(^{
+					overwriteFailed = NO;
+				});
+				
+				it(@"should not let the destination directory of a move react", ^{
+					[[item moveTo:directory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
+						overwriteFailed = YES;
+					}];
+					
+					expect(overwriteFailed).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(childrenURLsWithUpdates(@[]));
+				});
+				
+				it(@"should not let the source directory of a move react", ^{
+					
+				});
+				
+				it(@"should not let the destination directory of a copy react", ^{
+					
+				});
+				
+				it(@"should not let the source directory of a copy react", ^{
+					
+				});
+			});
+			
+			describe(@"when overwriting", ^{
+				it(@"should let the destination directory of a move react", ^{
+					
+				});
+				
+				it(@"should let the source directory of a move react", ^{
+					
+				});
+				
+				it(@"should let the destination directory of a copy react", ^{
+					
+				});
+				
+				it(@"should not let the source directory of a copy react", ^{
+					
+				});
+			});
 		});
 	});
 	
