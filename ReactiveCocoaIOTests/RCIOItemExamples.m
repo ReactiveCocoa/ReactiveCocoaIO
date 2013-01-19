@@ -444,7 +444,57 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			expect(deletedItem).will.beIdenticalTo(item);
 			expect(completed).will.beTruthy();
+			expect(item.url).will.beNil();
 			expect(itemExistsAtURL(itemURL)).will.beFalsy();
+		});
+	});
+	
+	describe(@"reactions", ^{
+		__block NSURL *directoryURL = nil;
+		__block RCIODirectory *directory = nil;
+		__block NSMutableArray *directoryChildrenURLs = nil;
+		__block RACDisposable *directoryChildrenDisposable = nil;
+		
+		before(^{
+			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				item = x;
+			}];
+			expect(item).willNot.beNil();
+			
+			directoryURL = [testRootDirectory URLByAppendingPathComponent:@"directory"];
+			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
+				directory = x;
+			}];
+			expect(directory).willNot.beNil();
+			
+			directoryChildrenURLs = [NSMutableArray array];
+			directoryChildrenDisposable = [directory.childrenSignal subscribeNext:^(NSArray *children) {
+				NSMutableArray *childrenURLs = [NSMutableArray array];
+				for (RCIOItem *child in children) {
+					[childrenURLs addObject:child.url];
+				}
+				[directoryChildrenURLs addObject:childrenURLs];
+			}];
+		});
+		
+		after(^{
+			directoryURL = nil;
+			directory = nil;
+			directoryChildrenURLs = nil;
+			[directoryChildrenDisposable dispose];
+			directoryChildrenDisposable = nil;
+		});
+		
+		it(@"should let it's parent react to it's creation", ^{
+			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+			__block RCIOItem *newItem = nil;
+			
+			[[RCIOItemSubclass itemWithURL:newItemURL] subscribeNext:^(id x) {
+				newItem = x;
+			}];
+			
+			expect(newItem).willNot.beNil();
+			expect(directoryChildrenURLs).will.equal((@[ @[], @[ newItemURL ] ]));
 		});
 	});
 	
