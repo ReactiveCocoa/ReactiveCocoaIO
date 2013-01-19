@@ -32,7 +32,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	
 	before(^{
 		testRootDirectory = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
-		itemURL = [testRootDirectory URLByAppendingPathComponent:@"test"];
+		itemURL = [testRootDirectory URLByAppendingPathComponent:@"item"];
 		item = nil;
 		errored = NO;
 		completed = NO;
@@ -193,6 +193,87 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	});
 	
 	describe(@"file management", ^{
+		__block NSURL *directoryURL = nil;
+		__block RCIODirectory *directory = nil;
+		__block RCIOItem *receivedItem = nil;
+		
+		before(^{
+			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
+				item = x;
+			}];
+			expect(item).willNot.beNil();
+			
+			directoryURL = [testRootDirectory URLByAppendingPathComponent:@"directory"];
+			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
+				directory = x;
+			}];
+			expect(directory).willNot.beNil();
+		});
+		
+		after(^{
+			directoryURL = nil;
+			directory = nil;
+			receivedItem = nil;
+		});
+		
+		describe(@"moving", ^{
+			it(@"should move an item to a different directory with a different name", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+				
+				[[item moveTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).will.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(item.url).to.equal(newItemURL);
+				expect(itemExistsAtURL(itemURL)).will.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should move an item to a different directory", ^{
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
+				
+				[[item moveTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).will.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(item.url).to.equal(newItemURL);
+				expect(itemExistsAtURL(itemURL)).will.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+			
+			it(@"should rename an item", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [testRootDirectory URLByAppendingPathComponent:newName];
+				
+				[[item moveTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
+					receivedItem = x;
+				} error:^(NSError *error) {
+					errored = YES;
+				} completed:^{
+					completed = YES;
+				}];
+				
+				expect(receivedItem).will.beIdenticalTo(item);
+				expect(completed).will.beTruthy();
+				expect(item.url).to.equal(newItemURL);
+				expect(itemExistsAtURL(itemURL)).will.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+			});
+		});
+		
 		it(@"should delete an item", ^{
 			__block RCIOItem *deletedItem = nil;
 			
