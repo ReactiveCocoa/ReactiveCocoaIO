@@ -25,26 +25,13 @@
 
 #pragma mark RCIOItem
 
-+ (RACSignal *)itemWithURL:(NSURL *)url {
-	url = url.URLByDeletingTrailingSlash;
-	return [super itemWithURL:url];
-}
-
 + (instancetype)createItemAtURL:(NSURL *)url {
-	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
 	if (![@"" writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:NULL]) return nil;
 	return [[self alloc] initWithURL:url];
 }
 
-#if DEBUG
-+ (instancetype)loadItemFromURL:(NSURL *)url {
-	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
-	return [super loadItemFromURL:url];
-}
-#endif
-
 - (instancetype)initWithURL:(NSURL *)url {
-	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
+	url = url.URLByDeletingTrailingSlash;
 	
 	self = [super initWithURL:url];
 	if (self == nil) return nil;

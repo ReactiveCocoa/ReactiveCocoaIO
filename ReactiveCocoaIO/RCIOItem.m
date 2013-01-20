@@ -70,21 +70,22 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 + (RACSignal *)itemWithURL:(NSURL *)url mode:(RCIOItemMode)mode {
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
+			NSURL *resolvedURL = url.URLByResolvingSymlinksInPath;
 			__block RCIOItem *item = nil;
 			
 			accessItemCache(^(RCIOWeakDictionary *itemCache) {
-				if ([NSFileManager.defaultManager fileExistsAtPath:url.path]) {
+				if ([NSFileManager.defaultManager fileExistsAtPath:resolvedURL.path]) {
 					if (mode & RCIOItemModeExclusiveAccess) {
 						[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
 						return;
 					}
-					item = [self loadItemFromURL:url];
+					item = [self loadItemFromURL:resolvedURL];
 				} else {
-					item = [self createItemAtURL:url];
+					item = [self createItemAtURL:resolvedURL];
 					[item didCreate];
 				}
 				
-				if (item != nil) itemCache[url.URLByResolvingSymlinksInPath] = item;
+				if (item != nil) itemCache[resolvedURL.URLByDeletingTrailingSlash] = item;
 			});
 			
 			if (item != nil && [item isKindOfClass:self]) {
@@ -111,7 +112,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	__block RCIOItem *item = nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
-		item = itemCache[url.URLByResolvingSymlinksInPath];
+		item = itemCache[url.URLByDeletingTrailingSlash];
 	});
 	if (item != nil) return item;
 	
@@ -173,7 +174,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	NSURL *url = self.urlBacking;
 	__block RCIODirectory *parent = nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
-		parent = itemCache[url.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath];
+		parent = itemCache[url.URLByDeletingLastPathComponent.URLByDeletingTrailingSlash];
 	});
 	[parent didAddItem:self];
 }
@@ -185,11 +186,11 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	__block RCIODirectory *fromParent = nil;
 	__block RCIODirectory *toParent = nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
-		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath];
-		toParent = itemCache[url.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath];
-		[itemCache removeObjectForKey:fromURL.URLByResolvingSymlinksInPath];
+		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent.URLByDeletingTrailingSlash];
+		toParent = itemCache[url.URLByDeletingLastPathComponent.URLByDeletingTrailingSlash];
+		[itemCache removeObjectForKey:fromURL.URLByDeletingTrailingSlash];
 		self.urlBacking = url;
-		itemCache[url.URLByResolvingSymlinksInPath] = self;
+		itemCache[url.URLByDeletingTrailingSlash] = self;
 	});
 	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
 	if ([toParent isKindOfClass:RCIODirectory.class]) [toParent didAddItem:self];
@@ -200,8 +201,8 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	
 	__block RCIODirectory *toParent = nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
-		toParent = itemCache[url.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath];
-		itemCache[url.URLByResolvingSymlinksInPath] = self;
+		toParent = itemCache[url.URLByDeletingLastPathComponent.URLByDeletingTrailingSlash];
+		itemCache[url.URLByDeletingTrailingSlash] = self;
 	});
 	if ([toParent isKindOfClass:RCIODirectory.class]) [toParent didAddItem:self];
 }
@@ -212,8 +213,8 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	NSURL *fromURL = self.urlBacking;
 	__block RCIODirectory *fromParent =nil;
 	accessItemCache(^(RCIOWeakDictionary *itemCache) {
-		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath];
-		[itemCache removeObjectForKey:fromURL.URLByResolvingSymlinksInPath];
+		fromParent = itemCache[fromURL.URLByDeletingLastPathComponent.URLByDeletingTrailingSlash];
+		[itemCache removeObjectForKey:fromURL.URLByDeletingTrailingSlash];
 		self.urlBacking = nil;
 	});
 	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
@@ -241,8 +242,8 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			NSURL *destinationURL = url;
 			
 			if (destinationURL != nil) {
-				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
-				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
 			}
 			
 			if (![url isEqual:destinationURL]) {
@@ -253,10 +254,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 					return;
 				}
 				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-					NSURL *resolvedDestinationURL = destinationURL.URLByResolvingSymlinksInPath;
 					if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
 						accessItemCache(^(RCIOWeakDictionary *itemCache) {
-							[itemCache[resolvedDestinationURL] didDelete];
+							[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
 						});
 					}
 				}
@@ -280,8 +280,8 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			NSURL *destinationURL = url;
 			
 			if (destinationURL != nil) {
-				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
-				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
 			}
 			
 			if (![url isEqual:destinationURL]) {
@@ -292,10 +292,9 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 					return;
 				}
 				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-					NSURL *resolvedDestinationURL = destinationURL.URLByResolvingSymlinksInPath;
 					if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
 						accessItemCache(^(RCIOWeakDictionary *itemCache) {
-							[itemCache[resolvedDestinationURL] didDelete];
+							[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
 						});
 					}
 				}
@@ -339,7 +338,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			NSError *error = nil;
 			
 			for (;;) {
-				destinationURL = [url.URLByDeletingLastPathComponent URLByAppendingPathComponent:(url.pathExtension.length == 0 ? [NSString stringWithFormat:@"%@ (%@)", url.lastPathComponent, @(duplicateCount)] : [NSString stringWithFormat:@"%@ (%@).%@", url.lastPathComponent.stringByDeletingPathExtension, @(duplicateCount), url.pathExtension]) isDirectory:NO];
+				destinationURL = [url.URLByDeletingLastPathComponent URLByAppendingPathComponent:(url.pathExtension.length == 0 ? [NSString stringWithFormat:@"%@ (%@)", url.lastPathComponent, @(duplicateCount)] : [NSString stringWithFormat:@"%@ (%@).%@", url.lastPathComponent.stringByDeletingPathExtension, @(duplicateCount), url.pathExtension])];
 				if (![NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) break;
 				++duplicateCount;
 			}
