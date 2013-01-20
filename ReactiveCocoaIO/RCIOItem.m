@@ -68,6 +68,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 #pragma mark RCIOItem
 
 + (RACSignal *)itemWithURL:(NSURL *)url mode:(RCIOItemMode)mode {
+	if (!url.isFileURL) return [RACSignal error:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
 	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *resolvedURL = url.URLByResolvingSymlinksInPath;
