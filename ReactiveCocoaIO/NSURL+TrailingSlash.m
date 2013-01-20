@@ -21,14 +21,14 @@
 - (NSURL *)URLByAppendingTrailingSlash {
 	NSParameterAssert(self.isFileURL);
 	NSURL *url = self;
-	if (!self.hasTrailingSlash) url = [NSURL URLWithString:[NSString stringWithFormat:@"file://localhost%@/", self.path]];
+	if (!self.hasTrailingSlash) url = [NSURL URLWithString:[self.absoluteString stringByAppendingString:@"/"]];
 	return url;
 }
 
 - (NSURL *)URLByDeletingTrailingSlash {
 	NSParameterAssert(self.isFileURL);
 	NSURL *url = self;
-	if (self.hasTrailingSlash) url = [NSURL URLWithString:[NSString stringWithFormat:@"file://localhost%@", [url.path substringToIndex:url.path.length]]];
+	if (self.hasTrailingSlash) url = [NSURL URLWithString:[self.absoluteString substringToIndex:self.absoluteString.length - 1]];
 	return url;
 }
 
