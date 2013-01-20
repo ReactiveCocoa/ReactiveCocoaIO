@@ -20,8 +20,8 @@ describe(@"NSURL+TrailingSlash", ^{
 	
 	beforeAll(^{
 		// URLs for files that don't exist on the file system to avoid NSURL magic
-		urlWithoutTrailingSlash = [NSURL URLWithString:@"file://localhost/directorythatdoesntexist/test"];
-		urlWithTrailingSlash = [NSURL URLWithString:@"file://localhost/directorythatdoesntexist/test/"];
+		urlWithoutTrailingSlash = [NSURL URLWithString:@"file://localhost/directory%20that%20doesn't%20exist/test"];
+		urlWithTrailingSlash = [NSURL URLWithString:@"file://localhost/directory%20that%20doesn't%20exist/test/"];
 		// URLs for files that exist on the file system to trigger NSURL magic
 		fileURLWithoutTrailingSlash = [NSURL URLWithString:@"file://localhost/etc/hosts"];
 		fileURLWithTrailingSlash = [NSURL URLWithString:@"file://localhost/etc/hosts/"];
