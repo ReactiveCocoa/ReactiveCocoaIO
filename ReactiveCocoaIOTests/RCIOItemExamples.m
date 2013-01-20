@@ -518,7 +518,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(newItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, newItemURL ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, newItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should let the destination directory of a move react", ^{
@@ -530,7 +530,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, movedItemURL ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, movedItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should let the source directory of a move react", ^{
@@ -553,7 +553,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL, copiedItemURL ]));
+			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, copiedItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should not let the source directory of a copy react", ^{
@@ -564,7 +564,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			}];
 			
 			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(@[ overwriteTargetURL ]);
+			expect(directoryChildrenURLs).will.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 		});
 		
 		describe(@"on collisions", ^{
@@ -581,7 +581,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a move react", ^{
@@ -590,7 +590,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the destination directory of a copy react", ^{
@@ -599,7 +599,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
@@ -608,7 +608,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteFailed).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 			});
 			
@@ -625,7 +625,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteCompleted).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should let the source directory of a move react", ^{
@@ -643,7 +643,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteCompleted).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
@@ -652,7 +652,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 					}];
 					
 					expect(overwriteCompleted).will.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 			});
 		});
@@ -804,7 +804,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block RCIODirectory *parent1 = nil;
 			__block RCIODirectory *parent2 = nil;
 			
-			[[RCIODirectory itemWithURL:[item.url URLByDeletingLastPathComponent]] subscribeNext:^(id x) {
+			[[RCIODirectory itemWithURL:item.url.URLByDeletingLastPathComponent] subscribeNext:^(id x) {
 				parent1 = x;
 			}];
 			

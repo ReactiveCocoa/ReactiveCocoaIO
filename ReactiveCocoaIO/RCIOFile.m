@@ -9,6 +9,8 @@
 #import "RCIOFile.h"
 #import "RCIOItem+Private.h"
 
+#import "NSURL+TrailingSlash.h"
+
 @interface RCIOFile ()
 
 @property (nonatomic) NSStringEncoding encodingBacking;
@@ -23,12 +25,27 @@
 
 #pragma mark RCIOItem
 
++ (RACSignal *)itemWithURL:(NSURL *)url {
+	url = url.URLByDeletingTrailingSlash;
+	return [super itemWithURL:url];
+}
+
 + (instancetype)createItemAtURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
 	if (![@"" writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:NULL]) return nil;
 	return [[self alloc] initWithURL:url];
 }
 
+#if DEBUG
++ (instancetype)loadItemFromURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
+	return [super loadItemFromURL:url];
+}
+#endif
+
 - (instancetype)initWithURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && !url.hasTrailingSlash);
+	
 	self = [super initWithURL:url];
 	if (self == nil) return nil;
 	
@@ -36,6 +53,16 @@
 	_contentBacking = @"";
 	
 	return self;
+}
+
+- (void)didMoveToURL:(NSURL *)url {
+	url = url.URLByDeletingTrailingSlash;
+	[super didMoveToURL:url];
+}
+
+- (void)didCopyToURL:(NSURL *)url {
+	url = url.URLByDeletingTrailingSlash;
+	[super didCopyToURL:url];
 }
 
 #pragma mark RCIOFile

@@ -10,10 +10,10 @@
 
 #import <sys/xattr.h>
 
+#import "NSURL+TrailingSlash.h"
 #import "RCIODirectory+Private.h"
 #import "RCIOFile.h"
 #import "RCIOWeakDictionary.h"
-//#import "../External/ReactiveCocoa/ReactiveCocoaFramework/ReactiveCocoa/RACPropertySubject+Private.h"
 
 // Scheduler for serializing accesses to the file system
 RACScheduler *fileSystemScheduler() {
@@ -118,8 +118,10 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	[url getResourceValue:&detectedType forKey:NSURLFileResourceTypeKey error:NULL];
 	if (detectedType == NSURLFileResourceTypeRegular) {
 		class = [RCIOFile class];
+		url = url.URLByDeletingTrailingSlash;
 	} else if (detectedType == NSURLFileResourceTypeDirectory) {
 		class = [RCIODirectory class];
+		url = url.URLByAppendingTrailingSlash;
 	}
 	
 	return [[class alloc] initWithURL:url];
@@ -127,7 +129,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 
 - (instancetype)initWithURL:(NSURL *)url {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
-	NSParameterAssert([url isFileURL]);
+	NSParameterAssert(url.isFileURL);
 	
 	self = [super init];
 	if (!self) {

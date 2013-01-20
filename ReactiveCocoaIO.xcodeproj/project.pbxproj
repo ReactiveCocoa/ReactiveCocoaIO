@@ -40,6 +40,10 @@
 		5FDBD73616A6994300AB947A /* RCIOWeakDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD73316A6994300AB947A /* RCIOWeakDictionary.m */; };
 		5FDBD73716A6994300AB947A /* RCIOWeakDictionary.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD73316A6994300AB947A /* RCIOWeakDictionary.m */; };
 		5FDBD73A16A6A9C900AB947A /* RCIOWeakDictionarySpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD73916A6A9C900AB947A /* RCIOWeakDictionarySpec.m */; };
+		5FDBD81116AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */ = {isa = PBXBuildFile; fileRef = 5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5FDBD81216AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */ = {isa = PBXBuildFile; fileRef = 5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5FDBD81316AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */; };
+		5FDBD81416AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -203,6 +207,8 @@
 		5FDBD73216A6994300AB947A /* RCIOWeakDictionary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCIOWeakDictionary.h; sourceTree = "<group>"; };
 		5FDBD73316A6994300AB947A /* RCIOWeakDictionary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOWeakDictionary.m; sourceTree = "<group>"; };
 		5FDBD73916A6A9C900AB947A /* RCIOWeakDictionarySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOWeakDictionarySpec.m; sourceTree = "<group>"; };
+		5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+TrailingSlash.h"; sourceTree = "<group>"; };
+		5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+TrailingSlash.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -489,6 +495,8 @@
 			children = (
 				5FDBD73216A6994300AB947A /* RCIOWeakDictionary.h */,
 				5FDBD73316A6994300AB947A /* RCIOWeakDictionary.m */,
+				5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */,
+				5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */,
 			);
 			name = "Helper Classes";
 			sourceTree = "<group>";
@@ -520,6 +528,7 @@
 				5F37CEDC16A482A300F3020A /* RCIOFile.h in Headers */,
 				5F37CEDD16A482A300F3020A /* RCIODirectory.h in Headers */,
 				5FDBD73516A6994300AB947A /* RCIOWeakDictionary.h in Headers */,
+				5FDBD81216AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -532,6 +541,7 @@
 				5F37CF0416A4842800F3020A /* RCIOFile.h in Headers */,
 				5F37CF0516A4842800F3020A /* RCIODirectory.h in Headers */,
 				5FDBD73416A6994300AB947A /* RCIOWeakDictionary.h in Headers */,
+				5FDBD81116AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -762,6 +772,7 @@
 				5F37CEB216A480CE00F3020A /* RCIOFile.m in Sources */,
 				5F37CEB416A480CF00F3020A /* RCIOItem.m in Sources */,
 				5FDBD73716A6994300AB947A /* RCIOWeakDictionary.m in Sources */,
+				5FDBD81416AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -785,6 +796,7 @@
 				5F37CF0016A4840400F3020A /* RCIOFile.m in Sources */,
 				5F37CF0116A4840400F3020A /* RCIODirectory.m in Sources */,
 				5FDBD73616A6994300AB947A /* RCIOWeakDictionary.m in Sources */,
+				5FDBD81316AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

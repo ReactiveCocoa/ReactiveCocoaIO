@@ -9,6 +9,8 @@
 #import "RCIODirectory+Private.h"
 #import "RCIOItem+Private.h"
 
+#import "NSURL+TrailingSlash.h"
+
 static NSString * const RCIODirectoryChangeTypeAdd = @"RCIODirectoryChangeTypeAdd";
 static NSString * const RCIODirectoryChangeTypeRemove = @"RCIODirectoryChangeTypeRemove";
 
@@ -24,9 +26,37 @@ static NSString * const RCIODirectoryChangeTypeRemove = @"RCIODirectoryChangeTyp
 
 #pragma mark RCIOItem
 
++ (RACSignal *)itemWithURL:(NSURL *)url {
+	url = url.URLByAppendingTrailingSlash;
+	return [super itemWithURL:url];
+}
+
 + (instancetype)createItemAtURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && url.hasTrailingSlash);
 	if (![NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]) return nil;
 	return [[self alloc] initWithURL:url];
+}
+
+#if DEBUG
++ (instancetype)loadItemFromURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && url.hasTrailingSlash);
+	return [super loadItemFromURL:url];
+}
+
+- (instancetype)initWithURL:(NSURL *)url {
+	NSParameterAssert(url.isFileURL && url.hasTrailingSlash);
+	return [super initWithURL:url];
+}
+#endif
+
+- (void)didMoveToURL:(NSURL *)url {
+	url = url.URLByAppendingTrailingSlash;
+	[super didMoveToURL:url];
+}
+
+- (void)didCopyToURL:(NSURL *)url {
+	url = url.URLByAppendingTrailingSlash;
+	[super didCopyToURL:url];
 }
 
 #pragma mark RCIODirectory
