@@ -629,11 +629,21 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				});
 				
 				it(@"should let the source directory of a move react", ^{
+					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:YES] subscribeCompleted:^{
+						overwriteCompleted = YES;
+					}];
 					
+					expect(overwriteCompleted).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(@[]);
 				});
 				
 				it(@"should let the destination directory of a copy react", ^{
+					[[item copyTo:directory withName:nil replaceExisting:YES] subscribeCompleted:^{
+						overwriteCompleted = YES;
+					}];
 					
+					expect(overwriteCompleted).will.beTruthy();
+					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
