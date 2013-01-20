@@ -25,7 +25,7 @@
 - (NSURL *)URLByDeletingTrailingSlash {
 	NSParameterAssert(self.isFileURL);
 	NSURL *url = self;
-	if (self.hasTrailingSlash) url = [NSURL fileURLWithPath:[url.path substringToIndex:url.path.length - 1]];
+	if (self.hasTrailingSlash) url = [NSURL fileURLWithPath:[url.path substringToIndex:url.path.length]];
 	return url;
 }
 

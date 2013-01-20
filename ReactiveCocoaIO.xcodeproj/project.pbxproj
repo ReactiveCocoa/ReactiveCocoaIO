@@ -44,6 +44,7 @@
 		5FDBD81216AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */ = {isa = PBXBuildFile; fileRef = 5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		5FDBD81316AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */; };
 		5FDBD81416AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */; };
+		5FDBD81716AC43D400AB947A /* NSURLTrailingSlashSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 5FDBD81616AC43D400AB947A /* NSURLTrailingSlashSpec.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -209,6 +210,7 @@
 		5FDBD73916A6A9C900AB947A /* RCIOWeakDictionarySpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOWeakDictionarySpec.m; sourceTree = "<group>"; };
 		5FDBD80F16AC3AC600AB947A /* NSURL+TrailingSlash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSURL+TrailingSlash.h"; sourceTree = "<group>"; };
 		5FDBD81016AC3AC600AB947A /* NSURL+TrailingSlash.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSURL+TrailingSlash.m"; sourceTree = "<group>"; };
+		5FDBD81616AC43D400AB947A /* NSURLTrailingSlashSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSURLTrailingSlashSpec.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -306,6 +308,7 @@
 				5F37D11D16A5693A00F3020A /* RCIOFileSpec.m */,
 				5F37D12016A5696300F3020A /* RCIODirectorySpec.m */,
 				5FDBD73916A6A9C900AB947A /* RCIOWeakDictionarySpec.m */,
+				5FDBD81616AC43D400AB947A /* NSURLTrailingSlashSpec.m */,
 				5F37CAC116A4726F00F3020A /* Supporting Files */,
 			);
 			path = ReactiveCocoaIOTests;
@@ -785,6 +788,7 @@
 				5F37D11E16A5693B00F3020A /* RCIOFileSpec.m in Sources */,
 				5F37D12116A5696300F3020A /* RCIODirectorySpec.m in Sources */,
 				5FDBD73A16A6A9C900AB947A /* RCIOWeakDictionarySpec.m in Sources */,
+				5FDBD81716AC43D400AB947A /* NSURLTrailingSlashSpec.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
