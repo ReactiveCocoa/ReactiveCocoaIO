@@ -127,12 +127,16 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 
 - (instancetype)initWithURL:(NSURL *)url {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
+	NSParameterAssert([url isFileURL]);
+	
 	self = [super init];
 	if (!self) {
 		return nil;
 	}
+	
 	_urlBacking = url;
 	_extendedAttributesBacking = [NSMutableDictionary dictionary];
+	
 	return self;
 }
 
@@ -233,9 +237,11 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		return [fileSystemScheduler() schedule:^{
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = url;
-
-			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
-			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+			
+			if (destinationURL != nil) {
+				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
+				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+			}
 			
 			if (![url isEqual:destinationURL]) {
 				NSError *error = nil;
@@ -271,8 +277,10 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			NSURL *url = self.urlBacking;
 			NSURL *destinationURL = url;
 			
-			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
-			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+			if (destinationURL != nil) {
+				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent isDirectory:NO];
+				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName isDirectory:NO];
+			}
 			
 			if (![url isEqual:destinationURL]) {
 				NSError *error = nil;
@@ -294,7 +302,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 					return;
 				}
 			}
-
+			
 			RCIOItem *item = [RCIOItem loadItemFromURL:destinationURL];
 			if (item == nil) {
 				[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
