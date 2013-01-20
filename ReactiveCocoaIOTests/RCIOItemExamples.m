@@ -231,7 +231,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -249,7 +249,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -268,7 +268,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -291,7 +291,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				errored = NO;
 				expect(receivedItem).will.beNil();
 				expect(completed).will.beFalsy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 			});
 
@@ -310,7 +310,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				
 				expect(receivedItem).will.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -332,8 +332,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(receivedItem).willNot.beNil();
 				expect(receivedItem).toNot.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -352,8 +352,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(receivedItem).willNot.beNil();
 				expect(receivedItem).toNot.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -373,8 +373,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(receivedItem).willNot.beNil();
 				expect(receivedItem).toNot.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
@@ -397,7 +397,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				errored = NO;
 				expect(receivedItem).will.beNil();
 				expect(completed).will.beFalsy();
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 			});
 			
@@ -417,8 +417,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(receivedItem).willNot.beNil();
 				expect(receivedItem).toNot.beIdenticalTo(item);
 				expect(completed).will.beTruthy();
-				expect(receivedItem.url.URLByResolvingSymlinksInPath).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url.URLByResolvingSymlinksInPath).to.equal(itemURL.URLByResolvingSymlinksInPath);
+				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).will.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
 			});
