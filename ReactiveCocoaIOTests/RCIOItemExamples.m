@@ -515,43 +515,20 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block NSString *receivedAttribute = nil;
 			
 			@autoreleasepool {
-				// Keep a reference to item or it'll deallocate before the attribute value is received
-				__block RCIOItem *item __attribute__((objc_precise_lifetime)) = nil;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					item = x;
-//					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-//						deallocd = YES;
-//					}]];
-					RACPropertySubject *attributeSubject __attribute__((objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:attributeKey];
-					[attributeSubject subscribeNext:^(id x) {
-						receivedAttribute = x;
-					}];
-					[attributeSubject sendNext:attributeValue];
-				}];
-				expect(receivedAttribute).will.equal(attributeValue);
-//				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-//				__block RCIOItem *item __attribute__((objc_precise_lifetime)) = nil;
-//				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-//					item = x;
-//				}];
-//				
-				expect(item).willNot.beNil();
-//
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 					deallocd = YES;
 				}]];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+
+				[[item extendedAttributeSubjectForKey:attributeKey] sendNext:attributeValue];
+				receivedAttribute = [[item extendedAttributeSubjectForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-//				expect(error).to.beNil();
-//				expect(success).to.beTruthy();
-//				expect(item).toNot.beNil();
-//				
-//				RACPropertySubject *attributeSubject __attribute__((objc_precise_lifetime)) = [item extendedAttributeSubjectForKey:attributeKey];
-//				[attributeSubject sendNext:attributeValue];
-//				receivedAttribute = [attributeSubject asynchronousFirstOrDefault:nil success:&success error:&error];
-//				
-//				expect(error).to.beNil();
-//				expect(success).to.beTruthy();
-//				expect(receivedAttribute).to.equal(attributeValue);
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedAttribute).to.equal(attributeValue);
 			}
 			
 			expect(deallocd).will.beTruthy();
@@ -576,57 +553,54 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block BOOL deallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
-					}]];
-				} completed:^{
-					disposableAttached = YES;
-				}];
-				expect(disposableAttached).to.beTruthy();
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
-			expect(deallocd).to.beTruthy();
+			expect(deallocd).will.beTruthy();
 		});
 		
 		it(@"should deallocate even if an extended attribute interface has been created", ^{
 			__block BOOL deallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:@"key"];
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						deallocd = YES;
-					}]];
-				} completed:^{
-					disposableAttached = YES;
-				}];
-				expect(disposableAttached).to.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [item extendedAttributeSubjectForKey:@"key"];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
-			expect(deallocd).to.beTruthy();
+			expect(deallocd).will.beTruthy();
 		});
 		
 		it(@"should let it's parent deallocate", ^{
 			__block BOOL parentDeallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *item) {
-					[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent __attribute__((objc_precise_lifetime))) {
-						[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-							parentDeallocd = YES;
-						}]];
-					} completed:^{
-						disposableAttached = YES;
-					}];
-				}];
-				expect(disposableAttached).to.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+				RCIODirectory *parent __attribute__((objc_precise_lifetime)) = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					parentDeallocd = YES;
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
-			expect(parentDeallocd).to.beTruthy();
+			expect(parentDeallocd).will.beTruthy();
 		});
 		
 		it(@"should deallocate if a reference to it's parent is kept after getting the parent's children", ^{
@@ -634,61 +608,62 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block RCIODirectory *parent = nil;
 			
 			@autoreleasepool {
-				__block BOOL finishedGettingChildren = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *x __attribute__((objc_precise_lifetime))) {
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						deallocd = YES;
-					}]];
-					[[[x parentSignal] take:1] subscribeNext:^(RCIODirectory *y) {
-						parent = y;
-						[[[y childrenSignal] take:1] subscribeNext:^(NSArray *children __attribute__((objc_precise_lifetime))) {
-							expect(children.count).to.beGreaterThan(0);
-							finishedGettingChildren = YES;
-						}];
-					}];
-				}];
-				expect(parent).toNot.beNil();
-				expect(finishedGettingChildren).to.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+				parent = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+//				NSArray *children __attribute__((unused, objc_precise_lifetime)) =
+				
+				__block NSArray *children __attribute__((objc_precise_lifetime)) = nil;
+//				[[parent.childrenSignal take:1] subscribeNext:^(id x) {
+//					children = x;
+//				}];
+				
+				children = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
-			expect(deallocd).to.beTruthy();
 			expect(parent).toNot.beNil();
+			expect(deallocd).will.beTruthy();
 		});
 	});
 	
 	describe(@"uniquing", ^{
 		before(^{
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
-			
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];			
 			expect(item).toNot.beNil();
 		});
 		
 		it(@"should be uniqued", ^{
-			__block RCIOItem *sameItem = nil;
+			RCIOItem *sameItem = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				sameItem = x;
-			}];
-			
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
 			expect(sameItem).to.beIdenticalTo(item);
 		});
 		
 		it(@"should unique it's parent", ^{
-			__block RCIODirectory *parent1 = nil;
-			__block RCIODirectory *parent2 = nil;
+			RCIODirectory *parent1 = [[RCIODirectory itemWithURL:item.url.URLByDeletingLastPathComponent] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[RCIODirectory itemWithURL:item.url.URLByDeletingLastPathComponent] subscribeNext:^(id x) {
-				parent1 = x;
-			}];
-			
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
 			expect(parent1).toNot.beNil();
 			
-			[[[item parentSignal] take:1] subscribeNext:^(id x) {
-				parent2 = x;
-			}];
+			RCIODirectory *parent2 = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
 			
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
 			expect(parent2).to.beIdenticalTo(parent1);
 		});
 	});
