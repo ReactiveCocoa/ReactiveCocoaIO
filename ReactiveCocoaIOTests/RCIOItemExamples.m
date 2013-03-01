@@ -606,6 +606,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		it(@"should deallocate if a reference to it's parent is kept after getting the parent's children", ^{
 			__block BOOL deallocd = NO;
 			__block RCIODirectory *parent = nil;
+			__block BOOL childrenDeallocd = NO;
 			
 			@autoreleasepool {
 				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
@@ -621,20 +622,17 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 				
-//				NSArray *children __attribute__((unused, objc_precise_lifetime)) =
-				
-				__block NSArray *children __attribute__((objc_precise_lifetime)) = nil;
-//				[[parent.childrenSignal take:1] subscribeNext:^(id x) {
-//					children = x;
-//				}];
-				
-				children = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				NSArray *children __attribute__((objc_precise_lifetime)) = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				[children rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					childrenDeallocd = YES;
+				}]];
 				
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 			}
 			
 			expect(parent).toNot.beNil();
+			expect(childrenDeallocd).will.beTruthy();
 			expect(deallocd).will.beTruthy();
 		});
 	});
