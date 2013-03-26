@@ -35,7 +35,7 @@ RACScheduler *currentScheduler() {
 static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
 	NSCAssert(block != nil, @"Passed nil block to accessItemCache");
-	static RCIOWeakDictionary *itemCache = nil;
+	static RCIOWeakDictionary *itemCache = (id)@"";
 	static dispatch_once_t onceToken;
 	dispatch_once(&onceToken, ^{
 		itemCache = [RCIOWeakDictionary dictionary];
@@ -170,7 +170,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 
 - (void)didCreate {
 	ASSERT_FILE_SYSTEM_SCHEDULER();
-	NSAssert(self.urlBacking != nil, @"Created an item with a nil URL.");
+	NSCAssert(self.urlBacking != nil, @"Created an item with a nil URL.");
 	
 	NSURL *url = self.urlBacking;
 	__block RCIODirectory *parent = nil;
