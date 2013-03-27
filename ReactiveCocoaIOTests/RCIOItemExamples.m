@@ -27,22 +27,20 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 	__block NSURL *testRootDirectoryURL;
 	__block NSURL *itemURL;
 	__block RCIOItem *item;
-	__block BOOL errored;
-	__block BOOL completed;
+	__block BOOL success;
+	__block NSError *error;
 	
 	before(^{
 		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
 		itemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
 		item = nil;
-		errored = NO;
-		completed = NO;
+		success = NO;
+		error = nil;
 		
 		[NSFileManager.defaultManager createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 	});
 	
 	after(^{
-		expect(errored).to.beFalsy();
-		
 		[NSFileManager.defaultManager removeItemAtURL:testRootDirectoryURL error:NULL];
 	});
 	
@@ -50,48 +48,33 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		it(@"should not return an item that doesn't exist", ^{
 			expect(itemExistsAtURL(itemURL)).to.beFalsy();
 			
-			[[RCIOItem itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			}];
+			item = [[RCIOItem itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			expect(errored).will.beTruthy();
-			// Reset error before the after block
-			errored = NO;
-			expect(item).will.beNil();
+			expect(error).toNot.beNil();
+			expect(success).to.beFalsy();
+			expect(item).to.beNil();
 		});
 		
 		it(@"should return an item that does exist", ^{
 			createItemAtURL(itemURL);
 			expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			
-			[[RCIOItem itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			} completed:^{
-				completed = YES;
-			}];
+			item = [[RCIOItem itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			expect(item).willNot.beNil();
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(item).toNot.beNil();
 			expect(item.class).to.equal(RCIOItemSubclass);
-			expect(completed).will.beTruthy();
 		});
 	});
 	
 	describe(@"base interface", ^{
-		it(@"should create an item", ^{			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			} completed:^{
-				completed = YES;
-			}];
+		it(@"should create an item", ^{
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			expect(item).willNot.beNil();
-			expect(completed).will.beTruthy();
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(item).toNot.beNil();
 			expect(itemExistsAtURL(itemURL)).to.beTruthy();
 		});
 		
@@ -99,95 +82,74 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			createItemAtURL(itemURL);
 			expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			} completed:^{
-				completed = YES;
-			}];
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			expect(item).willNot.beNil();
-			expect(completed).will.beTruthy();
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(item).toNot.beNil();
 		});
 		
 		it(@"should not load an item if RCIOItemModeExclusiveAccess is specified", ^{
 			createItemAtURL(itemURL);
 			expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			
-			[[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] subscribeNext:^(id x) {
-				item = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			}];
-			
-			expect(errored).will.beTruthy();
-			// Reset error before the after block
-			errored = NO;
-			expect(item).will.beNil();
+			item = [[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] asynchronousFirstOrDefault:nil success:&success error:&error];
+			expect(error).toNot.beNil();
+			expect(success).to.beFalsy();
+			expect(item).to.beNil();
 		});
 		
 		it(@"should not load an item if RCIOItemModeExclusiveAccess is specified even if it was loaded before", ^{
 			createItemAtURL(itemURL);
 			expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+
+			expect(item).toNot.beNil();
 			
-			expect(item).willNot.beNil();
+			item = [[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			__block RCIOItem *item2 = nil;
-			
-			[[RCIOItemSubclass itemWithURL:itemURL mode:RCIOItemModeExclusiveAccess] subscribeNext:^(id x) {
-				item2 = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			}];
-			
-			expect(errored).will.beTruthy();
-			// Reset error before the after block
-			errored = NO;
-			expect(item2).will.beNil();
+			expect(error).toNot.beNil();
+			expect(success).to.beFalsy();
+			expect(item).to.beNil();
 		});
 				
 		describe(@"after being created", ^{
-			
 			before(^{
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-					item = x;
-				}];
-				
-				expect(item).willNot.beNil();
+				item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+				expect(item).toNot.beNil();
 			});
 			
 			it(@"should return it's parent", ^{
-				__block RCIODirectory *parent = nil;
+				RCIODirectory *parent = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				[[[item parentSignal] take:1] subscribeNext:^(id x) {
-					parent = x;
-				}error:^(NSError *error) {
-					errored = YES;
-				}];
-				
-				expect(parent).willNot.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(parent).toNot.beNil();
 			});
 
 			it(@"should be contained in it's parent's children", ^{
-				__block RCIOItem *matchedItem = nil;
+				RCIODirectory *parent = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				[[[[item parentSignal] take:1] flattenMap:^(RCIODirectory *parent) {
-					return [[parent childrenSignal] take:1];
-				}] subscribeNext:^(NSArray *children) {
-					for (RCIOItem *child in children) {
-						if (child == item) {
-							matchedItem = child;
-							break;
-						}
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(parent).toNot.beNil();
+				
+				NSArray *children = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(children).toNot.beNil();
+				
+				RCIOItem *matchedItem = nil;
+				for (RCIOItem *child in children) {
+					if (child == item) {
+						matchedItem = child;
+						break;
 					}
-				}];
+				}
 				
-				expect(matchedItem).will.beIdenticalTo(item);
+				expect(matchedItem).to.beIdenticalTo(item);
 			});
 		});
 	});
@@ -198,16 +160,12 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		__block RCIOItem *receivedItem = nil;
 		
 		before(^{
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
-			expect(item).willNot.beNil();
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(item).toNot.beNil();
 			
 			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
-			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
-				directory = x;
-			}];
-			expect(directory).willNot.beNil();
+			directory = [[RCIODirectory itemWithURL:directoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(directory).toNot.beNil();
 		});
 		
 		after(^{
@@ -221,56 +179,41 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				NSString *newName = @"newName";
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
 				
-				[[item moveTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item moveTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).will.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedItem).to.beIdenticalTo(item);
 				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should move an item to a different directory", ^{
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
 				
-				[[item moveTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).will.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedItem).to.beIdenticalTo(item);
 				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should rename an item", ^{
 				NSString *newName = @"newName";
 				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
 				
-				[[item moveTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item moveTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).will.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedItem).to.beIdenticalTo(item);
 				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should not overwrite an item if not asked to", ^{
@@ -278,21 +221,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				createItemAtURL(newItemURL);
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 				
-				[[item moveTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(errored).will.beTruthy();
-				// Reset errored before the after block
-				errored = NO;
-				expect(receivedItem).will.beNil();
-				expect(completed).will.beFalsy();
+				expect(error).toNot.beNil();
+				expect(success).to.beFalsy();
+				expect(receivedItem).to.beNil();
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			});
 
 			it(@"should overwrite an item if asked to", ^{
@@ -300,19 +235,14 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				createItemAtURL(newItemURL);
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 				
-				[[item moveTo:directory withName:nil replaceExisting:YES] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item moveTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).will.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedItem).to.beIdenticalTo(item);
 				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 		});
 		
@@ -321,62 +251,44 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				NSString *newName = @"newName";
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
 				
-				[[item copyTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item copyTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).willNot.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
 				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should copy an item to a different directory", ^{
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
 				
-				[[item copyTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).willNot.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
 				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should copy an item with a different name", ^{
 				NSString *newName = @"newName";
 				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
 				
-				[[item copyTo:nil withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item copyTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).willNot.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
 				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
 			it(@"should not overwrite an item if not asked to", ^{
@@ -384,21 +296,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				createItemAtURL(newItemURL);
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 				
-				[[item copyTo:directory withName:nil replaceExisting:NO] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(errored).will.beTruthy();
-				// Reset errored before the after block
-				errored = NO;
-				expect(receivedItem).will.beNil();
-				expect(completed).will.beFalsy();
+				expect(error).toNot.beNil();
+				expect(success).to.beFalsy();
+				expect(receivedItem).to.beNil();
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			});
 			
 			it(@"should overwrite an item if asked to", ^{
@@ -406,21 +310,15 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				createItemAtURL(newItemURL);
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 				
-				[[item copyTo:directory withName:nil replaceExisting:YES] subscribeNext:^(id x) {
-					receivedItem = x;
-				} error:^(NSError *error) {
-					errored = YES;
-				} completed:^{
-					completed = YES;
-				}];
+				receivedItem = [[item copyTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
-				expect(receivedItem).willNot.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(completed).will.beTruthy();
 				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).will.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 		});
 		
@@ -428,24 +326,17 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block RCIOItem *deletedItem = nil;
 			
 			createItemAtURL(itemURL);
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+
+			expect(item).toNot.beNil();
 			
-			expect(item).willNot.beNil();
+			deletedItem = [[item delete] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[item delete] subscribeNext:^(id x) {
-				deletedItem = x;
-			} error:^(NSError *error) {
-				errored = YES;
-			} completed:^{
-				completed = YES;
-			}];
-			
-			expect(deletedItem).will.beIdenticalTo(item);
-			expect(completed).will.beTruthy();
-			expect(item.url).will.beNil();
-			expect(itemExistsAtURL(itemURL)).will.beFalsy();
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(deletedItem).to.beIdenticalTo(item);
+			expect(item.url).to.beNil();
+			expect(itemExistsAtURL(itemURL)).to.beFalsy();
 		});
 	});
 	
@@ -463,18 +354,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		__block RCIOItem *overwriteTarget = nil;
 		
 		before(^{
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
-			expect(item).willNot.beNil();
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(item).toNot.beNil();
 			
 			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
-			[[RCIODirectory itemWithURL:directoryURL] subscribeNext:^(id x) {
-				directory = x;
-			}];
-			expect(directory).willNot.beNil();
+			directory = [[RCIODirectory itemWithURL:directoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(directory).toNot.beNil();
 			
-			directoryChildrenURLs = [NSMutableArray array];
 			directoryChildrenDisposable = [directory.childrenSignal subscribeNext:^(NSArray *children) {
 				NSMutableArray *childrenURLs = [NSMutableArray array];
 				for (RCIOItem *child in children) {
@@ -483,17 +369,12 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				directoryChildrenURLs = childrenURLs;
 			}];
 			
-			[[RCIODirectory itemWithURL:testRootDirectoryURL] subscribeNext:^(id x) {
-				testRootDirectory = x;
-			}];
-			expect(testRootDirectory).willNot.beNil();
+			testRootDirectory = [[RCIODirectory itemWithURL:testRootDirectoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(testRootDirectory).toNot.beNil();
 			
 			overwriteTargetURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-			[[RCIOItemSubclass itemWithURL:overwriteTargetURL] subscribeNext:^(id x) {
-				overwriteTarget = x;
-			}];
-			expect(overwriteTarget).willNot.beNil();
-			
+			overwriteTarget = [[RCIOItemSubclass itemWithURL:overwriteTargetURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
+			expect(overwriteTarget).toNot.beNil();
 		});
 		
 		after(^{
@@ -511,147 +392,115 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		
 		it(@"should let it's parent react to it's creation", ^{
 			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			__block RCIOItem *newItem = nil;
+			RCIOItem *newItem = [[RCIOItemSubclass itemWithURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[RCIOItemSubclass itemWithURL:newItemURL] subscribeNext:^(id x) {
-				newItem = x;
-			}];
-			
-			expect(newItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, newItemURL.URLByResolvingSymlinksInPath ]));
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(newItem).toNot.beNil();
+			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, newItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should let the destination directory of a move react", ^{
 			NSURL *movedItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			__block RCIOItem *movedItem = nil;
+			RCIOItem *movedItem = [[item moveTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[item moveTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-				movedItem = x;
-			}];
-			
-			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, movedItemURL.URLByResolvingSymlinksInPath ]));
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(movedItem).toNot.beNil();
+			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, movedItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should let the source directory of a move react", ^{
-			__block RCIOItem *movedItem = nil;
+			RCIOItem *movedItem = [[overwriteTarget moveTo:testRootDirectory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[overwriteTarget moveTo:testRootDirectory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-				movedItem = x;
-			}];
-			
-			expect(movedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(@[]);
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(movedItem).toNot.beNil();
+			expect(directoryChildrenURLs).to.equal(@[]);
 		});
 		
 		it(@"should let the destination directory of a copy react", ^{
 			NSURL *copiedItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			__block RCIOItem *copiedItem = nil;
+			RCIOItem *copiedItem = [[item copyTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[item copyTo:directory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-				copiedItem = x;
-			}];
-			
-			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, copiedItemURL.URLByResolvingSymlinksInPath ]));
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(copiedItem).toNot.beNil();
+			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, copiedItemURL.URLByResolvingSymlinksInPath ]));
 		});
 		
 		it(@"should not let the source directory of a copy react", ^{
-			__block RCIOItem *copiedItem = nil;
+			RCIOItem *copiedItem = [[overwriteTarget copyTo:testRootDirectory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[overwriteTarget copyTo:testRootDirectory withName:newName replaceExisting:NO] subscribeNext:^(id x) {
-				copiedItem = x;
-			}];
-			
-			expect(copiedItem).willNot.beNil();
-			expect(directoryChildrenURLs).will.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
+			expect(copiedItem).toNot.beNil();
+			expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 		});
 		
 		describe(@"on collisions", ^{
 			describe(@"when not overwriting", ^{
-				__block BOOL overwriteFailed;
-				
-				before(^{
-					overwriteFailed = NO;
-				});
-				
 				it(@"should not let the destination directory of a move react", ^{
-					[[item moveTo:directory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
-						overwriteFailed = YES;
-					}];
+					[[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteFailed).will.beTruthy();
+					expect(error).to.notTo.beNil();
+					expect(success).to.beFalsy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a move react", ^{
-					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
-						overwriteFailed = YES;
-					}];
+					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteFailed).will.beTruthy();
+					expect(error).to.notTo.beNil();
+					expect(success).to.beFalsy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the destination directory of a copy react", ^{
-					[[item copyTo:directory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
-						overwriteFailed = YES;
-					}];
+					[[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteFailed).will.beTruthy();
+					expect(error).to.notTo.beNil();
+					expect(success).to.beFalsy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
-					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:NO] subscribeError:^(NSError *error) {
-						overwriteFailed = YES;
-					}];
+					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteFailed).will.beTruthy();
+					expect(error).to.notTo.beNil();
+					expect(success).to.beFalsy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 			});
 			
 			describe(@"when overwriting", ^{
-				__block BOOL overwriteCompleted;
-				
-				before(^{
-					overwriteCompleted = NO;
-				});
-				
 				it(@"should let the destination directory of a move react", ^{
-					[[item moveTo:directory withName:nil replaceExisting:YES] subscribeCompleted:^{
-						overwriteCompleted = YES;
-					}];
+					[[item moveTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteCompleted).will.beTruthy();
+					expect(error).to.beNil();
+					expect(success).to.beTruthy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should let the source directory of a move react", ^{
-					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:YES] subscribeCompleted:^{
-						overwriteCompleted = YES;
-					}];
+					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteCompleted).will.beTruthy();
+					expect(error).to.beNil();
+					expect(success).to.beTruthy();
 					expect(directoryChildrenURLs).to.equal(@[]);
 				});
 				
 				it(@"should let the destination directory of a copy react", ^{
-					[[item copyTo:directory withName:nil replaceExisting:YES] subscribeCompleted:^{
-						overwriteCompleted = YES;
-					}];
+					[[item copyTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteCompleted).will.beTruthy();
+					expect(error).to.beNil();
+					expect(success).to.beTruthy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 				
 				it(@"should not let the source directory of a copy react", ^{
-					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:YES] subscribeCompleted:^{
-						overwriteCompleted = YES;
-					}];
+					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
 					
-					expect(overwriteCompleted).will.beTruthy();
+					expect(error).to.beNil();
+					expect(success).to.beTruthy();
 					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
 				});
 			});
@@ -666,33 +515,36 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block NSString *receivedAttribute = nil;
 			
 			@autoreleasepool {
-				// Keep a reference to item or it'll deallocate before the attribute value is received
-				__block RCIOItem *item __attribute__((objc_precise_lifetime)) = nil;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					item = x;
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						deallocd = YES;
-					}]];
-					RACPropertySubject *attributeSubject __attribute__((objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:attributeKey];
-					[attributeSubject subscribeNext:^(id x) {
-						receivedAttribute = x;
-					}];
-					[attributeSubject sendNext:attributeValue];
-				}];
-				expect(receivedAttribute).will.equal(attributeValue);
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+
+				[[item extendedAttributeSubjectForKey:attributeKey] sendNext:attributeValue];
+				receivedAttribute = [[item extendedAttributeSubjectForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(receivedAttribute).to.equal(attributeValue);
 			}
 			
 			expect(deallocd).will.beTruthy();
 			receivedAttribute = nil;
 			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-				[[item extendedAttributeSubjectForKey:attributeKey] subscribeNext:^(id x) {
-					receivedAttribute = x;
-				}];
-			}];
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			expect(receivedAttribute).will.equal(attributeValue);
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(item).toNot.beNil();
+			
+			receivedAttribute = [[item extendedAttributeSubjectForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
+			
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(receivedAttribute).to.equal(attributeValue);
 		});
 	});
 	
@@ -701,15 +553,13 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block BOOL deallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
-					}]];
-				} completed:^{
-					disposableAttached = YES;
-				}];
-				expect(disposableAttached).will.beTruthy();
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
 			expect(deallocd).will.beTruthy();
@@ -719,16 +569,14 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block BOOL deallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x __attribute__((objc_precise_lifetime))) {
-					RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [x extendedAttributeSubjectForKey:@"key"];
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						deallocd = YES;
-					}]];
-				} completed:^{
-					disposableAttached = YES;
-				}];
-				expect(disposableAttached).will.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [item extendedAttributeSubjectForKey:@"key"];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
 			expect(deallocd).will.beTruthy();
@@ -738,17 +586,18 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			__block BOOL parentDeallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL disposableAttached = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *item) {
-					[[[item parentSignal] take:1] subscribeNext:^(RCIODirectory *parent __attribute__((objc_precise_lifetime))) {
-						[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-							parentDeallocd = YES;
-						}]];
-					} completed:^{
-						disposableAttached = YES;
-					}];
-				}];
-				expect(disposableAttached).will.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+				RCIODirectory *parent __attribute__((objc_precise_lifetime)) = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					parentDeallocd = YES;
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
 			expect(parentDeallocd).will.beTruthy();
@@ -757,64 +606,63 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		it(@"should deallocate if a reference to it's parent is kept after getting the parent's children", ^{
 			__block BOOL deallocd = NO;
 			__block RCIODirectory *parent = nil;
+			__block BOOL childrenDeallocd = NO;
 			
 			@autoreleasepool {
-				__block BOOL finishedGettingChildren = NO;
-				[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(RCIOItem *x __attribute__((objc_precise_lifetime))) {
-					[x rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
-						deallocd = YES;
-					}]];
-					[[[x parentSignal] take:1] subscribeNext:^(RCIODirectory *y) {
-						parent = y;
-						[[[y childrenSignal] take:1] subscribeNext:^(NSArray *children __attribute__((objc_precise_lifetime))) {
-							expect(children.count).to.beGreaterThan(0);
-							finishedGettingChildren = YES;
-						}];
-					}];
-				}];
-				expect(parent).willNot.beNil();
-				expect(finishedGettingChildren).will.beTruthy();
+				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					deallocd = YES;
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+				parent = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				
+				NSArray *children __attribute__((objc_precise_lifetime)) = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
+				[children rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+					childrenDeallocd = YES;
+				}]];
+				
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 			}
 			
-			expect(deallocd).will.beTruthy();
 			expect(parent).toNot.beNil();
+			expect(childrenDeallocd).will.beTruthy();
+			expect(deallocd).will.beTruthy();
 		});
 	});
 	
 	describe(@"uniquing", ^{
 		before(^{
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				item = x;
-			}];
-			
-			expect(item).willNot.beNil();
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];			
+			expect(item).toNot.beNil();
 		});
 		
 		it(@"should be uniqued", ^{
-			__block RCIOItem *sameItem = nil;
+			RCIOItem *sameItem = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[RCIOItemSubclass itemWithURL:itemURL] subscribeNext:^(id x) {
-				sameItem = x;
-			}];
-			
-			expect(sameItem).will.beIdenticalTo(item);
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(sameItem).to.beIdenticalTo(item);
 		});
 		
 		it(@"should unique it's parent", ^{
-			__block RCIODirectory *parent1 = nil;
-			__block RCIODirectory *parent2 = nil;
+			RCIODirectory *parent1 = [[RCIODirectory itemWithURL:item.url.URLByDeletingLastPathComponent] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[RCIODirectory itemWithURL:item.url.URLByDeletingLastPathComponent] subscribeNext:^(id x) {
-				parent1 = x;
-			}];
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(parent1).toNot.beNil();
 			
-			expect(parent1).willNot.beNil();
+			RCIODirectory *parent2 = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
 			
-			[[[item parentSignal] take:1] subscribeNext:^(id x) {
-				parent2 = x;
-			}];
-			
-			expect(parent2).will.beIdenticalTo(parent1);
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(parent2).to.beIdenticalTo(parent1);
 		});
 	});
 });
