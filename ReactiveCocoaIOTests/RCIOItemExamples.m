@@ -189,6 +189,17 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
+			it(@"should move an item even if the returned signal is not subscribed to", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+				
+				[item moveTo:directory withName:newName replaceExisting:NO];
+				
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+			});
+			
 			it(@"should move an item to a different directory", ^{
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
 				
@@ -262,6 +273,16 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 			
+			it(@"should copy an item even if the returned signal is not subscribed to", ^{
+				NSString *newName = @"newName";
+				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+				
+				[item copyTo:directory withName:newName replaceExisting:NO];
+				
+				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+			});
+			
 			it(@"should copy an item to a different directory", ^{
 				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
 				
@@ -327,7 +348,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			createItemAtURL(itemURL);
 			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-
+			
 			expect(item).toNot.beNil();
 			
 			deletedItem = [[item delete] asynchronousFirstOrDefault:nil success:&success error:&error];
@@ -337,6 +358,18 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			expect(deletedItem).to.beIdenticalTo(item);
 			expect(item.url).to.beNil();
 			expect(itemExistsAtURL(itemURL)).to.beFalsy();
+		});
+		
+		it(@"should delete an item even if the returned signal is not subscribed to", ^{
+			createItemAtURL(itemURL);
+			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+			
+			expect(item).toNot.beNil();
+			
+			[item delete];
+			
+			expect(itemExistsAtURL(itemURL)).will.beFalsy();
+			expect(item.url).to.beNil();
 		});
 	});
 	

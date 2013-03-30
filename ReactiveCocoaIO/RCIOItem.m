@@ -237,85 +237,89 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 @implementation RCIOItem (FileManagement)
 
 - (RACSignal *)moveTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		return [fileSystemScheduler() schedule:^{
-			NSURL *url = self.urlBacking;
-			NSURL *destinationURL = url;
+	RACSubject *subject = [RACReplaySubject subject];
+	
+	[fileSystemScheduler() schedule:^{
+		NSURL *url = self.urlBacking;
+		NSURL *destinationURL = url;
+		
+		if (destinationURL != nil) {
+			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
+		}
+		
+		if (![url isEqual:destinationURL]) {
+			NSError *error = nil;
 			
-			if (destinationURL != nil) {
-				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
-				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
+			if (url == nil) {
+				[subject sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+				return;
 			}
-			
-			if (![url isEqual:destinationURL]) {
-				NSError *error = nil;
-				
-				if (url == nil) {
-					[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
-					return;
-				}
-				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-					if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
-						accessItemCache(^(RCIOWeakDictionary *itemCache) {
-							[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
-						});
-					}
-				}
-				if (![NSFileManager.defaultManager moveItemAtURL:url toURL:destinationURL error:&error]) {
-					[subscriber sendError:error];
-					return;
+			if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
+				if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
+					accessItemCache(^(RCIOWeakDictionary *itemCache) {
+						[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
+					});
 				}
 			}
-			
-			[self didMoveToURL:destinationURL];
-			[subscriber sendNext:self];
-			[subscriber sendCompleted];
-		}];
-	}] deliverOn:currentScheduler()];
+			if (![NSFileManager.defaultManager moveItemAtURL:url toURL:destinationURL error:&error]) {
+				[subject sendError:error];
+				return;
+			}
+		}
+		
+		[self didMoveToURL:destinationURL];
+		[subject sendNext:self];
+		[subject sendCompleted];
+	}];
+	
+	return [subject deliverOn:currentScheduler()];
 }
 
 - (RACSignal *)copyTo:(RCIODirectory *)destination withName:(NSString *)newName replaceExisting:(BOOL)shouldReplace {
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		return [fileSystemScheduler() schedule:^{
-			NSURL *url = self.urlBacking;
-			NSURL *destinationURL = url;
+	RACSubject *subject = [RACReplaySubject subject];
+	
+	[fileSystemScheduler() schedule:^{
+		NSURL *url = self.urlBacking;
+		NSURL *destinationURL = url;
+		
+		if (destinationURL != nil) {
+			if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
+			if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
+		}
+		
+		if (![url isEqual:destinationURL]) {
+			NSError *error = nil;
 			
-			if (destinationURL != nil) {
-				if (destination != nil) destinationURL = [destination.urlBacking URLByAppendingPathComponent:destinationURL.lastPathComponent];
-				if (newName != nil) destinationURL = [destinationURL.URLByDeletingLastPathComponent URLByAppendingPathComponent:newName];
-			}
-			
-			if (![url isEqual:destinationURL]) {
-				NSError *error = nil;
-				
-				if (url == nil) {
-					[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
-					return;
-				}
-				if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
-					if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
-						accessItemCache(^(RCIOWeakDictionary *itemCache) {
-							[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
-						});
-					}
-				}
-				if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
-					[subscriber sendError:error];
-					return;
-				}
-			}
-			
-			RCIOItem *item = [RCIOItem loadItemFromURL:destinationURL];
-			if (item == nil) {
-				[subscriber sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+			if (url == nil) {
+				[subject sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
 				return;
 			}
-			
-			[item didCopyToURL:destinationURL];
-			[subscriber sendNext:item];
-			[subscriber sendCompleted];
-		}];
-	}] deliverOn:currentScheduler()];
+			if (shouldReplace && [NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) {
+				if ([NSFileManager.defaultManager removeItemAtURL:destinationURL error:&error]) {
+					accessItemCache(^(RCIOWeakDictionary *itemCache) {
+						[itemCache[destinationURL.URLByDeletingTrailingSlash] didDelete];
+					});
+				}
+			}
+			if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
+				[subject sendError:error];
+				return;
+			}
+		}
+		
+		RCIOItem *item = [RCIOItem loadItemFromURL:destinationURL];
+		if (item == nil) {
+			[subject sendError:[NSError errorWithDomain:@"RCIOErrorDomain" code:-1 userInfo:nil]];
+			return;
+		}
+		
+		[item didCopyToURL:destinationURL];
+		[subject sendNext:item];
+		[subject sendCompleted];
+	}];
+	
+	return [subject deliverOn:currentScheduler()];
 }
 
 - (RACSignal *)moveTo:(RCIODirectory *)destination {
@@ -331,45 +335,48 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 }
 
 - (RACSignal *)duplicate {
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		return [fileSystemScheduler() schedule:^{
-			NSURL *url = self.urlBacking;
-			NSUInteger duplicateCount = 1;
-			NSURL *destinationURL = nil;
-			NSError *error = nil;
-			
-			for (;;) {
-				destinationURL = [url.URLByDeletingLastPathComponent URLByAppendingPathComponent:(url.pathExtension.length == 0 ? [NSString stringWithFormat:@"%@ (%@)", url.lastPathComponent, @(duplicateCount)] : [NSString stringWithFormat:@"%@ (%@).%@", url.lastPathComponent.stringByDeletingPathExtension, @(duplicateCount), url.pathExtension])];
-				if (![NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) break;
-				++duplicateCount;
-			}
-			if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
-				[subscriber sendError:error];
-			} else {
-				RCIOItem *duplicate = [[self.class alloc] initWithURL:destinationURL];
-				[duplicate didCopyToURL:destinationURL];
-				[subscriber sendNext:duplicate];
-				[subscriber sendCompleted];
-			}
-		}];
-	}] deliverOn:currentScheduler()];
+	RACSubject *subject = [RACReplaySubject subject];
+	
+	[fileSystemScheduler() schedule:^{
+		NSURL *url = self.urlBacking;
+		NSUInteger duplicateCount = 1;
+		NSURL *destinationURL = nil;
+		NSError *error = nil;
+		
+		for (;;) {
+			destinationURL = [url.URLByDeletingLastPathComponent URLByAppendingPathComponent:(url.pathExtension.length == 0 ? [NSString stringWithFormat:@"%@ (%@)", url.lastPathComponent, @(duplicateCount)] : [NSString stringWithFormat:@"%@ (%@).%@", url.lastPathComponent.stringByDeletingPathExtension, @(duplicateCount), url.pathExtension])];
+			if (![NSFileManager.defaultManager fileExistsAtPath:destinationURL.path]) break;
+			++duplicateCount;
+		}
+		if (![NSFileManager.defaultManager copyItemAtURL:url toURL:destinationURL error:&error]) {
+			[subject sendError:error];
+		} else {
+			RCIOItem *duplicate = [[self.class alloc] initWithURL:destinationURL];
+			[duplicate didCopyToURL:destinationURL];
+			[subject sendNext:duplicate];
+			[subject sendCompleted];
+		}
+	}];
+	
+	return [subject deliverOn:currentScheduler()];
 }
 
 - (RACSignal *)delete {
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		return [fileSystemScheduler() schedule:^{
-			NSURL *url = self.urlBacking;
-			NSError *error = nil;
-			
-			if (![NSFileManager.defaultManager removeItemAtURL:url error:&error]) {
-				[subscriber sendError:error];
-			} else {
-				[self didDelete];
-				[subscriber sendNext:self];
-				[subscriber sendCompleted];
-			}
-		}];
-	}] deliverOn:currentScheduler()];
+	RACSubject *subject = [RACReplaySubject subject];
+	
+	[fileSystemScheduler() schedule:^{
+		NSURL *url = self.urlBacking;
+		NSError *error = nil;
+		
+		if (![NSFileManager.defaultManager removeItemAtURL:url error:&error]) {
+			[subject sendError:error];
+		} else {
+			[self didDelete];
+			[subject sendNext:self];
+			[subject sendCompleted];
+		}
+	}];
+	return [subject deliverOn:currentScheduler()];
 }
 
 @end
