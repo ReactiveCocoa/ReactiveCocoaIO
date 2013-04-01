@@ -193,6 +193,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		self.urlBacking = url;
 		itemCache[url.URLByDeletingTrailingSlash] = self;
 	});
+	if (fromParent == toParent) return;
 	if ([fromParent isKindOfClass:RCIODirectory.class]) [fromParent didRemoveItem:self];
 	if ([toParent isKindOfClass:RCIODirectory.class]) [toParent didAddItem:self];
 }

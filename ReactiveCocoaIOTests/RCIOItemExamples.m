@@ -452,6 +452,23 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			expect(directoryChildrenURLs).to.equal(@[]);
 		});
 		
+		it(@"should not let the directory react if the item is just renamed", ^{
+			__block NSArray *receivedChildren = nil;
+			[testRootDirectory.childrenSignal subscribeNext:^(NSArray *children) {
+				receivedChildren = children;
+			}];
+			
+			expect(receivedChildren).willNot.beNil();
+			receivedChildren = nil;
+			
+			RCIOItem *renamedItem = [[item moveTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+			
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(renamedItem).toNot.beNil();
+			expect(receivedChildren).to.beNil();
+		});
+		
 		it(@"should let the destination directory of a copy react", ^{
 			NSURL *copiedItemURL = [directoryURL URLByAppendingPathComponent:newName];
 			RCIOItem *copiedItem = [[item copyTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
