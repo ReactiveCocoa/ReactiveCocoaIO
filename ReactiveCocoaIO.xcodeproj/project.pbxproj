@@ -1186,6 +1186,7 @@
 				5FD7DCAE1750AEA8008710B4 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

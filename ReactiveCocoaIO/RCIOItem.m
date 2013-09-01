@@ -8,6 +8,7 @@
 
 #import "RCIOItem+Private.h"
 
+#import <ReactiveCocoa/RACPropertySubject+Private.h>
 #import <sys/xattr.h>
 
 #import "NSURL+TrailingSlash.h"
@@ -423,7 +424,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 			[backing sendCompleted];
 		}];
 		
-		subject = [[RACPropertySubject alloc] performSelector:@selector(initWithSignal:subscriber:) withObject:subjectSignal withObject:subjectSubscriber];
+		subject = [[RACPropertySubject alloc] initWithSignal:subjectSignal subscriber:subjectSubscriber];
 		
 		self.extendedAttributesBacking[key] = subject;
 		return subject;
