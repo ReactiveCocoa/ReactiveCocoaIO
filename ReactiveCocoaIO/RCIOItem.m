@@ -345,6 +345,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		if (channel != nil) return channel.followingTerminal;
 
 		channel = [[RACChannel alloc] init];
+		RACSubject *backing = [RACReplaySubject replaySubjectWithCapacity:1];
 
 		RACSignal *values = [[RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> subscriber) {
 			[[RACScheduler scheduler] schedule:^{
@@ -355,7 +356,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 				[subscriber sendCompleted];
 			}];
 			return nil;
-		}] concat:channel.leadingTerminal];
+		}] concat:backing];
 		[values subscribe:channel.leadingTerminal];
 
 		[channel.leadingTerminal subscribeNext:^(id x) {
@@ -363,6 +364,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 				@strongify(self);
 				if (self == nil) return;
 				[self saveXattrValue:x forKey:key];
+				[backing sendNext:x];
 			}];
 		}];
 

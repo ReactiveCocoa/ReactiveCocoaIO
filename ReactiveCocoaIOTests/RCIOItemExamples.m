@@ -573,12 +573,27 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 
+				__block BOOL receivedInitialAttributeValue = NO;
+				[[item extendedAttributeChannelForKey:attributeKey] subscribeNext:^(NSString *value) {
+					if (!receivedInitialAttributeValue) {
+						expect(value).to.beNil();
+						receivedInitialAttributeValue = YES;
+					} else {
+						receivedAttribute = value;
+						success = YES;
+					}
+				} error:^(NSError *receivedError) {
+					error = receivedError;
+					success = NO;
+				} completed:^{
+					success = YES;
+				}];
+
 				[[item extendedAttributeChannelForKey:attributeKey] sendNext:attributeValue];
-				receivedAttribute = [[item extendedAttributeChannelForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
-				
-				expect(error).to.beNil();
-				expect(success).to.beTruthy();
-				expect(receivedAttribute).to.equal(attributeValue);
+
+				expect(error).will.beNil();
+				expect(success).will.beTruthy();
+				expect(receivedAttribute).will.equal(attributeValue);
 			}
 			
 			expect(deallocd).will.beTruthy();
