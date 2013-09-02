@@ -27,7 +27,7 @@ static NSString * const RCIODirectoryChangeTypeRemove = @"RCIODirectoryChangeTyp
 #pragma mark RCIOItem
 
 + (instancetype)createItemAtURL:(NSURL *)url {
-	if (![NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]) return nil;
+	if (![[[NSFileManager alloc] init] createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]) return nil;
 	return [[self alloc] initWithURL:url];
 }
 
@@ -71,10 +71,14 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 - (RACSignal *)childrenSignalWithOptions:(NSDirectoryEnumerationOptions)options {
 	NSParameterAssert(!(options & NSDirectoryEnumerationSkipsPackageDescendants));
 	
-	return [[RACSignal createSignal:^RACDisposable *(id<RACSubscriber> subscriber) {
-		CANCELLATION_DISPOSABLE(disposable);
+	return [RACSignal createSignal:^(id<RACSubscriber> subscriber) {
+		__block volatile uint32_t __isCancelled = 0;
+		RACCompoundDisposable *disposable = [RACCompoundDisposable compoundDisposable];
+		[disposable addDisposable:[RACDisposable disposableWithBlock:^{
+			OSAtomicOr32Barrier(1, &__isCancelled);
+		}]];
 		
-		[disposable addDisposable:[fileSystemScheduler() schedule:^{
+		[disposable addDisposable:[[RACScheduler scheduler] schedule:^{
 			
 			RACSubject *childrenChannel = self.childrenChannel;
 			if (childrenChannel == nil) {
@@ -84,7 +88,7 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 			
 			NSArray *children = [self loadChildren];
 			
-			[disposable addDisposable:[[[[childrenChannel scanWithStart:children combine:^id(NSMutableArray *children, RACTuple *change) {
+			[disposable addDisposable:[[[[childrenChannel scanWithStart:children reduce:^id(NSMutableArray *children, RACTuple *change) {
 				RACTupleUnpack(NSString *type, RCIOItem *item) = change;
 				
 				if (type == RCIODirectoryChangeTypeAdd) {
@@ -98,17 +102,17 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 				
 				return children;
 			}] startWith:children] map:^ NSArray * (NSArray *content) {
-				IF_CANCELLED_RETURN(@[]);
+				if (__isCancelled != 0) return @[];
 				
 				NSMutableArray *processedContent = [NSMutableArray arrayWithCapacity:content.count];
-				processContent(content, processedContent, options, CANCELLATION_FLAG);
+				processContent(content, processedContent, options, &__isCancelled);
 				
 				return processedContent;
 			}] subscribe:subscriber]];
 		}]];
 		
 		return disposable;
-	}] deliverOn:currentScheduler()];
+	}];
 }
 
 - (RACSignal *)childrenSignal {
@@ -116,13 +120,11 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 }
 
 - (void)didAddItem:(RCIOItem *)item {
-	ASSERT_FILE_SYSTEM_SCHEDULER();
 	NSParameterAssert(item != nil);
 	[self.childrenChannel sendNext:[RACTuple tupleWithObjects:RCIODirectoryChangeTypeAdd, item, nil]];
 }
 
 - (void)didRemoveItem:(RCIOItem *)item {
-	ASSERT_FILE_SYSTEM_SCHEDULER();
 	NSParameterAssert(item != nil);
 	[self.childrenChannel sendNext:[RACTuple tupleWithObjects:RCIODirectoryChangeTypeRemove, item, nil]];
 }
@@ -130,10 +132,9 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 #pragma mark - Private Methods
 
 - (NSMutableArray *)loadChildren {
-	ASSERT_FILE_SYSTEM_SCHEDULER();
 	if (self.urlBacking == nil) return nil;
 	NSMutableArray *children = [NSMutableArray array];
-	for (NSURL *url in [NSFileManager.defaultManager enumeratorAtURL:self.urlBacking includingPropertiesForKeys:nil options:NSDirectoryEnumerationSkipsSubdirectoryDescendants errorHandler:nil]) {
+	for (NSURL *url in [[[NSFileManager alloc] init] enumeratorAtURL:self.urlBacking includingPropertiesForKeys:nil options:NSDirectoryEnumerationSkipsSubdirectoryDescendants errorHandler:nil]) {
 		RCIOItem *child = [RCIOItem loadItemFromURL:url.URLByResolvingSymlinksInPath];
 		if (child != nil) [children addObject:child];
 	}

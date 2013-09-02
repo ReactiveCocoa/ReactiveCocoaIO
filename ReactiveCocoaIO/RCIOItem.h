@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class RACSignal, RACPropertySubject, RCIODirectory;
+@class RACSignal, RACChannelTerminal, RCIODirectory;
 
 // Specifies how the file system item should be accessed.
 //
@@ -44,12 +44,6 @@ typedef enum : NSUInteger {
 
 // Returns a signal that sends the URL of the receiver.
 @property (nonatomic, strong, readonly) RACSignal *urlSignal;
-
-// The name of the receiver.
-- (NSString *)name;
-
-// Returns a signal that sends the name of the receiver.
-@property (nonatomic, strong, readonly) RACSignal *nameSignal;
 
 // Returns a signal that sends the parent directory of the receiver.
 @property (nonatomic, strong, readonly) RACSignal *parentSignal;
@@ -101,8 +95,8 @@ typedef enum : NSUInteger {
 
 @interface RCIOItem (ExtendedAttributes)
 
-// Returns a property subject for the receiver's extended attribute identified
+// Returns a channel terminal for the receiver's extended attribute identified
 // by `key`.
-- (RACPropertySubject *)extendedAttributeSubjectForKey:(NSString *)key;
+- (RACChannelTerminal *)extendedAttributeChannelForKey:(NSString *)key;
 
 @end

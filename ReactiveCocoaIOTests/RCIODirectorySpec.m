@@ -11,7 +11,7 @@
 SpecBegin(RCIODirectory)
 
 describe(@"RCIODirectory", ^{
-	itShouldBehaveLike(RCIOItemExamples, @{ RCIOItemExampleClass: RCIODirectory.class, RCIOItemExampleBlock: [^(NSURL *url){ [NSFileManager.defaultManager createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]; } copy] });
+	itShouldBehaveLike(RCIOItemExamples, @{ RCIOItemExampleClass: RCIODirectory.class, RCIOItemExampleBlock: [^(NSURL *url){ [[[NSFileManager alloc] init] createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL]; } copy] });
 });
 
 SpecEnd

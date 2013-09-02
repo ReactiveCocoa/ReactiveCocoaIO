@@ -15,7 +15,7 @@ static NSString *randomString() {
 };
 
 static BOOL itemExistsAtURL(NSURL *url) {
-	return [NSFileManager.defaultManager fileExistsAtPath:url.path];
+	return [[[NSFileManager alloc] init] fileExistsAtPath:url.path];
 }
 
 SharedExampleGroupsBegin(RCIOItem)
@@ -37,11 +37,11 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 		success = NO;
 		error = nil;
 		
-		[NSFileManager.defaultManager createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+		[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 	});
 	
 	after(^{
-		[NSFileManager.defaultManager removeItemAtURL:testRootDirectoryURL error:NULL];
+		[[[NSFileManager alloc] init] removeItemAtURL:testRootDirectoryURL error:NULL];
 	});
 	
 	describe(@"RCIOItem", ^{
@@ -566,15 +566,15 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				[item.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 					deallocd = YES;
 				}]];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 
-				[[item extendedAttributeSubjectForKey:attributeKey] sendNext:attributeValue];
-				receivedAttribute = [[item extendedAttributeSubjectForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[[item extendedAttributeChannelForKey:attributeKey] sendNext:attributeValue];
+				receivedAttribute = [[item extendedAttributeChannelForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
 				
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
@@ -590,7 +590,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			expect(success).to.beTruthy();
 			expect(item).toNot.beNil();
 			
-			receivedAttribute = [[item extendedAttributeSubjectForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
+			receivedAttribute = [[item extendedAttributeChannelForKey:attributeKey] asynchronousFirstOrDefault:nil success:&success error:&error];
 			
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
@@ -604,7 +604,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				[item.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 						deallocd = YES;
 				}]];
 				
@@ -620,8 +620,8 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-				RACPropertySubject *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [item extendedAttributeSubjectForKey:@"key"];
-				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				RACChannelTerminal *attributeSubject __attribute__((unused, objc_precise_lifetime)) = [item extendedAttributeChannelForKey:@"key"];
+				[item.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 					deallocd = YES;
 				}]];
 
@@ -642,7 +642,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(success).to.beTruthy();
 				
 				RCIODirectory *parent __attribute__((objc_precise_lifetime)) = [item.parentSignal asynchronousFirstOrDefault:nil success:&success error:&error];
-				[parent rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				[parent.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 					parentDeallocd = YES;
 				}]];
 				
@@ -660,7 +660,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 			
 			@autoreleasepool {
 				RCIOItem *item __attribute__((objc_precise_lifetime)) = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-				[item rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				[item.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 					deallocd = YES;
 				}]];
 				
@@ -673,7 +673,7 @@ sharedExamplesFor(RCIOItemExamples, ^(NSDictionary *data) {
 				expect(success).to.beTruthy();
 				
 				NSArray *children __attribute__((objc_precise_lifetime)) = [parent.childrenSignal asynchronousFirstOrDefault:nil success:&success error:&error];
-				[children rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+				[children.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 					childrenDeallocd = YES;
 				}]];
 				
