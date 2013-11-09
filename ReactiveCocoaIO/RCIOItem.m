@@ -3,7 +3,7 @@
 //  ReactiveCocoaIO
 //
 //  Created by Uri Baghin on 9/26/12.
-//  Copyright (c) 2013 Enthusiastic Code. All rights reserved.
+//  Copyright (c) 2013 Uri Baghin. All rights reserved.
 //
 
 #import "RCIOItem+Private.h"

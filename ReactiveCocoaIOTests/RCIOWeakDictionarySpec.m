@@ -3,7 +3,7 @@
 //  ReactiveCocoaIO
 //
 //  Created by Uri Baghin on 16/01/2013.
-//  Copyright (c) 2013 Enthusiastic Code. All rights reserved.
+//  Copyright (c) 2013 Uri Baghin. All rights reserved.
 //
 
 #import "RCIOWeakDictionary.h"
