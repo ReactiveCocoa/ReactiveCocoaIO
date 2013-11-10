@@ -6,17 +6,11 @@
 //  Copyright (c) 2013 Uri Baghin. All rights reserved.
 //
 
+#import "RCIOTestUtilities.h"
+
 NSString * const RCIOItemExamples = @"RCIOItemExamples";
 NSString * const RCIOItemExampleClass = @"RCIOItemExampleClass";
 NSString * const RCIOItemExampleBlock = @"RCIOItemExampleBlock";
-
-static NSString *randomString() {
-	return [NSString stringWithFormat:@"%@", @(arc4random_uniform(8999999) + 1000000)];
-};
-
-static BOOL itemExistsAtURL(NSURL *url) {
-	return [[[NSFileManager alloc] init] fileExistsAtPath:url.path];
-}
 
 SharedExampleGroupsBegin(RCIOItem)
 
