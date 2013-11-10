@@ -205,6 +205,7 @@
 		49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOFileManagerSpec.m; sourceTree = "<group>"; };
 		49043AE9182FC93D00E7C12C /* RCIOTestUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCIOTestUtilities.h; sourceTree = "<group>"; };
 		49043AEA182FC93D00E7C12C /* RCIOTestUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOTestUtilities.m; sourceTree = "<group>"; };
+		49043B16183010A200E7C12C /* Test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Test.xcconfig; sourceTree = "<group>"; };
 		5F37CAA616A4726F00F3020A /* libReactiveCocoaIO-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libReactiveCocoaIO-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F37CAAD16A4726F00F3020A /* ReactiveCocoaIO-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReactiveCocoaIO-Prefix.pch"; sourceTree = "<group>"; };
 		5F37CAAE16A4726F00F3020A /* ReactiveCocoaIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactiveCocoaIO.h; sourceTree = "<group>"; };
@@ -476,6 +477,7 @@
 		5F37CD3216A47BE100F3020A /* Configurations */ = {
 			isa = PBXGroup;
 			children = (
+				49043B16183010A200E7C12C /* Test.xcconfig */,
 				5F37CD3316A47BE100F3020A /* Debug.xcconfig */,
 				5F37CD3416A47BE100F3020A /* Profile.xcconfig */,
 				5F37CD3516A47BE100F3020A /* Release.xcconfig */,
@@ -1159,6 +1161,7 @@
 		};
 		5FD7DCAC1750AEA8008710B4 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5F37CD3A16A47BE100F3020A /* iOS-Application.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = NO;
@@ -1183,6 +1186,7 @@
 		};
 		5FD7DCAD1750AEA8008710B4 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5F37CD3A16A47BE100F3020A /* iOS-Application.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
@@ -1207,6 +1211,7 @@
 		};
 		5FD7DCAE1750AEA8008710B4 /* Profile */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5F37CD3A16A47BE100F3020A /* iOS-Application.xcconfig */;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
