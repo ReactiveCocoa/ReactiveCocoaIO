@@ -8,6 +8,9 @@
 
 #import "RCIOWeakDictionary.h"
 
+#import <ReactiveCocoa/EXTScope.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
+
 @interface RCIOWeakWrapper : NSObject
 
 + (instancetype)wrapperWithValue:(id)value;

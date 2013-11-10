@@ -8,6 +8,8 @@
 
 #import "RCIOItemExamples.h"
 
+#import "RCIODirectory.h"
+
 SpecBegin(RCIODirectory)
 
 describe(@"RCIODirectory", ^{

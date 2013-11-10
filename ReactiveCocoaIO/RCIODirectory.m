@@ -9,6 +9,8 @@
 #import "RCIODirectory+Private.h"
 #import "RCIOItem+Private.h"
 
+#import <ReactiveCocoa/ReactiveCocoa.h>
+
 #import "NSURL+TrailingSlash.h"
 
 static NSString * const RCIODirectoryChangeTypeAdd = @"RCIODirectoryChangeTypeAdd";

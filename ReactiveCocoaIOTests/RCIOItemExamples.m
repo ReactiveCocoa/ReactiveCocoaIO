@@ -6,6 +6,10 @@
 //  Copyright (c) 2013 Uri Baghin. All rights reserved.
 //
 
+#import <ReactiveCocoa/ReactiveCocoa.h>
+
+#import "RCIODirectory.h"
+#import "RCIOItem.h"
 #import "RCIOTestUtilities.h"
 
 NSString * const RCIOItemExamples = @"RCIOItemExamples";

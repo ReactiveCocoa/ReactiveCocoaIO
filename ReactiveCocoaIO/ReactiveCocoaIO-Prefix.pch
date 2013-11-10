@@ -4,9 +4,4 @@
 
 #ifdef __OBJC__
 
-#import <libkern/OSAtomic.h>
-#import <ReactiveCocoaIO/ReactiveCocoaIO.h>
-#import <ReactiveCocoa/ReactiveCocoa.h>
-#import <ReactiveCocoa/EXTScope.h>
-
 #endif /* __OBJC__ */

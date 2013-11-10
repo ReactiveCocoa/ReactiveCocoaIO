@@ -6,6 +6,8 @@
 //  Copyright (c) 2013 Uri Baghin. All rights reserved.
 //
 
+#import <ReactiveCocoa/ReactiveCocoa.h>
+
 #import "RCIOWeakDictionary.h"
 
 SpecBegin(RCIOWeakDictionary)

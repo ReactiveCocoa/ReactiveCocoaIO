@@ -8,10 +8,13 @@
 
 #import "RCIOItem+Private.h"
 
+#import <ReactiveCocoa/EXTScope.h>
+#import <ReactiveCocoa/ReactiveCocoa.h>
 #import <sys/xattr.h>
 
 #import "NSURL+TrailingSlash.h"
 #import "RCIODirectory+Private.h"
+#import "RCIOFile.h"
 #import "RCIOWeakDictionary.h"
 
 // Access the cache of existing RCIOItems, used for uniquing
@@ -198,7 +201,7 @@ static void accessItemCache(void (^block)(RCIOWeakDictionary *itemCache)) {
 		if (channel != nil) return channel.followingTerminal;
 
 		channel = [[RACChannel alloc] init];
-		RACSubject *backing = [RACReplaySubject replaySubjectWithCapacity:1];
+		RACSubject *backing = [RACSubject subject];
 
 		RACSignal *values = [[RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> subscriber) {
 			[[RACScheduler scheduler] schedule:^{
