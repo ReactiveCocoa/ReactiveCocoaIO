@@ -6,25 +6,39 @@
 //
 //
 
+#import <ReactiveCocoa/ReactiveCocoa.h>
+
+#import "RCIOFileManager.h"
 #import "RCIOTestUtilities.h"
 
-SpecBegin(RCIOFileManager)
+static NSString * const RCIOFileManagerSharedExamplesName = @"RCIOFileManagerSharedExamplesName";
+static NSString * const RCIOFileManagerSharedExamplesCreateFilesystemItemBlock = @"RCIOFileManagerSharedExamplesCreateFilesystemItemBlock";
 
-describe(@"RCIOFileManager", ^{
+SharedExampleGroupsBegin(RCIOFileManager)
+
+sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	__block NSURL *testRootDirectoryURL;
+	__block NSURL *directoryURL;
 	__block NSURL *itemURL;
-	__block RCIOItem *item;
+	__block NSURL *newRootItemURL;
+	__block NSURL *newItemURL;
+	__block void(^createFilesystemItem)(NSURL *);
 	__block BOOL success;
 	__block NSError *error;
 
 	before(^{
 		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
+		directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
 		itemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
-		item = nil;
+		newRootItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"newItem"];
+		newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateFilesystemItemBlock];
 		success = NO;
 		error = nil;
 
 		[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+		[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+		createFilesystemItem(itemURL);
 	});
 
 	after(^{
@@ -32,407 +46,148 @@ describe(@"RCIOFileManager", ^{
 	});
 
 	describe(@"file management", ^{
-		__block NSURL *directoryURL = nil;
-		__block RCIODirectory *directory = nil;
-		__block RCIOItem *receivedItem = nil;
-
-		before(^{
-			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(item).toNot.beNil();
-
-			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
-			directory = [[RCIODirectory itemWithURL:directoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(directory).toNot.beNil();
-		});
-
-		after(^{
-			directoryURL = nil;
-			directory = nil;
-			receivedItem = nil;
-		});
-
 		describe(@"moving", ^{
-			it(@"should move an item to a different directory with a different name", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+			it(@"should not move an item if the signal is not subscribed to", ^{
+				[RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL];
 
-				receivedItem = [[item moveTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beFalsy();
+			});
+
+			it(@"should move an item twice if the signal is subscribed to twice", ^{
+				RACSignal *signal = [RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL];
+
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).to.beIdenticalTo(item);
-				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+
+				[[[NSFileManager alloc] init] removeItemAtURL:newItemURL error:NULL];
+				createFilesystemItem(itemURL);
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beFalsy();
+
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
 				expect(itemExistsAtURL(itemURL)).to.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 
-			it(@"should move an item even if the returned signal is not subscribed to", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
-
-				[item moveTo:directory withName:newName replaceExisting:NO];
-
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
-				expect(itemExistsAtURL(itemURL)).to.beFalsy();
-				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-			});
-
 			it(@"should move an item to a different directory", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-
-				receivedItem = [[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[[RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).to.beIdenticalTo(item);
-				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).to.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 
 			it(@"should rename an item", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
-
-				receivedItem = [[item moveTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[[RCIOFileManager moveItemAtURL:itemURL toURL:newRootItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).to.beIdenticalTo(item);
-				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).to.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-			});
-
-			it(@"should not overwrite an item if not asked to", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-				createItemAtURL(newItemURL);
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-
-				receivedItem = [[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-				expect(error).toNot.beNil();
-				expect(success).to.beFalsy();
-				expect(receivedItem).to.beNil();
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).to.beTruthy();
-			});
-
-			it(@"should overwrite an item if asked to", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-				createItemAtURL(newItemURL);
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-
-				receivedItem = [[item moveTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-				expect(error).to.beNil();
-				expect(success).to.beTruthy();
-				expect(receivedItem).to.beIdenticalTo(item);
-				expect(item.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).to.beFalsy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 		});
 
 		describe(@"copying", ^{
-			it(@"should copy an item to a different directory with a different name", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
+			it(@"should not copy an item if the signal is not subscribed to", ^{
+				[RCIOFileManager copyItemAtURL:itemURL toURL:newItemURL];
 
-				receivedItem = [[item copyTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beFalsy();
+			});
+
+			it(@"should copy an item twice if the signal is subscribed to twice", ^{
+				RACSignal *signal = [RCIOFileManager copyItemAtURL:itemURL toURL:newItemURL];
+
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-			});
 
-			it(@"should copy an item even if the returned signal is not subscribed to", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
-
-				[item copyTo:directory withName:newName replaceExisting:NO];
-
-				expect(itemExistsAtURL(newItemURL)).will.beTruthy();
+				[[[NSFileManager alloc] init] removeItemAtURL:newItemURL error:NULL];
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
+
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 
 			it(@"should copy an item to a different directory", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-
-				receivedItem = [[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[[RCIOFileManager copyItemAtURL:itemURL toURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 
-			it(@"should copy an item with a different name", ^{
-				NSString *newName = @"newName";
-				NSURL *newItemURL = [testRootDirectoryURL URLByAppendingPathComponent:newName];
-
-				receivedItem = [[item copyTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
+			it(@"should copy an item in the same directory", ^{
+				[[RCIOFileManager copyItemAtURL:itemURL toURL:newRootItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
-				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).to.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-			});
-
-			it(@"should not overwrite an item if not asked to", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-				createItemAtURL(newItemURL);
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-
-				receivedItem = [[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-				expect(error).toNot.beNil();
-				expect(success).to.beFalsy();
-				expect(receivedItem).to.beNil();
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
-				expect(itemExistsAtURL(itemURL)).to.beTruthy();
-			});
-
-			it(@"should overwrite an item if asked to", ^{
-				NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-				createItemAtURL(newItemURL);
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
-
-				receivedItem = [[item copyTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-				expect(error).to.beNil();
-				expect(success).to.beTruthy();
-				expect(receivedItem).toNot.beIdenticalTo(item);
-				expect(receivedItem.url).to.equal(newItemURL.URLByResolvingSymlinksInPath);
-				expect(item.url).to.equal(itemURL.URLByResolvingSymlinksInPath);
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 		});
 
-		it(@"should delete an item", ^{
-			__block RCIOItem *deletedItem = nil;
+		describe(@"removing", ^{
+			it(@"should not remove an item if the signal is not subscribed to", ^{
+				[RCIOFileManager removeItemAtURL:itemURL];
 
-			createItemAtURL(itemURL);
-			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+			});
 
-			expect(item).toNot.beNil();
+			it(@"should remove an item twice if the signal is subscribed to twice", ^{
+				RACSignal *signal = [RCIOFileManager removeItemAtURL:itemURL];
 
-			deletedItem = [[item delete] asynchronousFirstOrDefault:nil success:&success error:&error];
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
 
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(deletedItem).to.beIdenticalTo(item);
-			expect(item.url).to.beNil();
-			expect(itemExistsAtURL(itemURL)).to.beFalsy();
-		});
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
 
-		it(@"should delete an item even if the returned signal is not subscribed to", ^{
-			createItemAtURL(itemURL);
-			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				createFilesystemItem(itemURL);
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 
-			expect(item).toNot.beNil();
+				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
 
-			[item delete];
-
-			expect(itemExistsAtURL(itemURL)).will.beFalsy();
-			expect(item.url).to.beNil();
+				expect(error).to.beNil();
+				expect(success).to.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+			});
 		});
 	});
 
-	describe(@"reactions", ^{
-		NSString *newName = @"newName";
-
-		__block NSURL *directoryURL;
-		__block RCIODirectory *directory;
-		__block NSArray *directoryChildrenURLs;
-		__block RACDisposable *directoryChildrenDisposable;
-
-		__block RCIODirectory *testRootDirectory;
-
-		__block NSURL *overwriteTargetURL = nil;
-		__block RCIOItem *overwriteTarget = nil;
-
-		before(^{
-			item = [[RCIOItemSubclass itemWithURL:itemURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(item).toNot.beNil();
-
-			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
-			directory = [[RCIODirectory itemWithURL:directoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(directory).toNot.beNil();
-
-			directoryChildrenDisposable = [directory.childrenSignal subscribeNext:^(NSArray *children) {
-				NSMutableArray *childrenURLs = [NSMutableArray array];
-				for (RCIOItem *child in children) {
-					[childrenURLs addObject:child.url];
-				}
-				directoryChildrenURLs = childrenURLs;
-			}];
-
-			testRootDirectory = [[RCIODirectory itemWithURL:testRootDirectoryURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(testRootDirectory).toNot.beNil();
-
-			overwriteTargetURL = [directoryURL URLByAppendingPathComponent:itemURL.lastPathComponent];
-			overwriteTarget = [[RCIOItemSubclass itemWithURL:overwriteTargetURL] asynchronousFirstOrDefault:nil success:NULL error:NULL];
-			expect(overwriteTarget).toNot.beNil();
-		});
-
-		after(^{
-			directoryURL = nil;
-			directory = nil;
-			directoryChildrenURLs = nil;
-			[directoryChildrenDisposable dispose];
-			directoryChildrenDisposable = nil;
-
-			testRootDirectory = nil;
-
-			overwriteTargetURL = nil;
-			overwriteTarget = nil;
-		});
-
-		it(@"should let it's parent react to it's creation", ^{
-			NSURL *newItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			RCIOItem *newItem = [[RCIOItemSubclass itemWithURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(newItem).toNot.beNil();
-			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, newItemURL.URLByResolvingSymlinksInPath ]));
-		});
-
-		it(@"should let the destination directory of a move react", ^{
-			NSURL *movedItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			RCIOItem *movedItem = [[item moveTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(movedItem).toNot.beNil();
-			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, movedItemURL.URLByResolvingSymlinksInPath ]));
-		});
-
-		it(@"should let the source directory of a move react", ^{
-			RCIOItem *movedItem = [[overwriteTarget moveTo:testRootDirectory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(movedItem).toNot.beNil();
-			expect(directoryChildrenURLs).to.equal(@[]);
-		});
-
-		it(@"should not let the directory react if the item is just renamed", ^{
-			__block NSArray *receivedChildren = nil;
-			[testRootDirectory.childrenSignal subscribeNext:^(NSArray *children) {
-				receivedChildren = children;
-			}];
-
-			expect(receivedChildren).willNot.beNil();
-			receivedChildren = nil;
-
-			RCIOItem *renamedItem = [[item moveTo:nil withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(renamedItem).toNot.beNil();
-			expect(receivedChildren).to.beNil();
-		});
-
-		it(@"should let the destination directory of a copy react", ^{
-			NSURL *copiedItemURL = [directoryURL URLByAppendingPathComponent:newName];
-			RCIOItem *copiedItem = [[item copyTo:directory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(error).to.beNil();
-			expect(success).to.beTruthy();
-			expect(copiedItem).toNot.beNil();
-			expect(directoryChildrenURLs).to.equal((@[ overwriteTargetURL.URLByResolvingSymlinksInPath, copiedItemURL.URLByResolvingSymlinksInPath ]));
-		});
-
-		it(@"should not let the source directory of a copy react", ^{
-			RCIOItem *copiedItem = [[overwriteTarget copyTo:testRootDirectory withName:newName replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-			expect(copiedItem).toNot.beNil();
-			expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-		});
-
-		describe(@"on collisions", ^{
-			describe(@"when not overwriting", ^{
-				it(@"should not let the destination directory of a move react", ^{
-					[[item moveTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.notTo.beNil();
-					expect(success).to.beFalsy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-
-				it(@"should not let the source directory of a move react", ^{
-					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.notTo.beNil();
-					expect(success).to.beFalsy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-
-				it(@"should not let the destination directory of a copy react", ^{
-					[[item copyTo:directory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.notTo.beNil();
-					expect(success).to.beFalsy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-
-				it(@"should not let the source directory of a copy react", ^{
-					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:NO] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.notTo.beNil();
-					expect(success).to.beFalsy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-			});
-
-			describe(@"when overwriting", ^{
-				it(@"should let the destination directory of a move react", ^{
-					[[item moveTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.beNil();
-					expect(success).to.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-
-				it(@"should let the source directory of a move react", ^{
-					[[overwriteTarget moveTo:testRootDirectory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.beNil();
-					expect(success).to.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[]);
-				});
-
-				it(@"should let the destination directory of a copy react", ^{
-					[[item copyTo:directory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.beNil();
-					expect(success).to.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-
-				it(@"should not let the source directory of a copy react", ^{
-					[[overwriteTarget copyTo:testRootDirectory withName:nil replaceExisting:YES] asynchronousFirstOrDefault:nil success:&success error:&error];
-
-					expect(error).to.beNil();
-					expect(success).to.beTruthy();
-					expect(directoryChildrenURLs).to.equal(@[ overwriteTargetURL.URLByResolvingSymlinksInPath ]);
-				});
-			});
-		});
+	describe(@"directory listings", ^{
+		
 	});
 });
+
+SharedExampleGroupsEnd
+
+SpecBegin(RCIOFileManager)
+
+itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateFilesystemItemBlock: [^(NSURL *url) {
+	touch(url);
+} copy] });
+
+itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateFilesystemItemBlock: [^(NSURL *url) {
+	[[[NSFileManager alloc] init] createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL];
+} copy] });
 
 SpecEnd
