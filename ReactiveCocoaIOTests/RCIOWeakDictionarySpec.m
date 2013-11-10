@@ -30,8 +30,8 @@ describe(@"RCIOWeakDictionary", ^{
 		__block BOOL deallocd = NO;
 		
 		@autoreleasepool {
-			id object = [[NSObject alloc] init];
-			[object rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+			NSObject *object = [[NSObject alloc] init];
+			[object.rac_deallocDisposable addDisposable:[RACDisposable disposableWithBlock:^{
 				deallocd = YES;
 			}]];
 			dictionary[key] = object;

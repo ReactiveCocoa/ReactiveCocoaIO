@@ -48,7 +48,7 @@
 		RCIOWeakWrapper *wrapper = [RCIOWeakWrapper wrapperWithValue:obj];
 		@weakify(self, wrapper);
 		
-		[obj rac_addDeallocDisposable:[RACDisposable disposableWithBlock:^{
+		[[obj rac_deallocDisposable] addDisposable:[RACDisposable disposableWithBlock:^{
 			@strongify(self, wrapper);
 			if (self == nil || wrapper == nil) return;
 			
