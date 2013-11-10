@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		49043ADC182FA31500E7C12C /* RCIOFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 49043ADA182FA31500E7C12C /* RCIOFileManager.h */; };
+		49043ADD182FA31500E7C12C /* RCIOFileManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 49043ADA182FA31500E7C12C /* RCIOFileManager.h */; };
+		49043ADE182FA31500E7C12C /* RCIOFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043ADB182FA31500E7C12C /* RCIOFileManager.m */; };
+		49043ADF182FA31500E7C12C /* RCIOFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043ADB182FA31500E7C12C /* RCIOFileManager.m */; };
+		49043AE2182FA3B500E7C12C /* RCIOFileManagerSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */; };
+		49043AE3182FA3B500E7C12C /* RCIOFileManagerSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */; };
 		5F37CAC516A4726F00F3020A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5F37CAC316A4726F00F3020A /* InfoPlist.strings */; };
 		5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */; };
 		5F37CAD416A472E100F3020A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CAD316A472E000F3020A /* Foundation.framework */; };
@@ -192,6 +198,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		49043ADA182FA31500E7C12C /* RCIOFileManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCIOFileManager.h; sourceTree = "<group>"; };
+		49043ADB182FA31500E7C12C /* RCIOFileManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOFileManager.m; sourceTree = "<group>"; };
+		49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOFileManagerSpec.m; sourceTree = "<group>"; };
 		5F37CAA616A4726F00F3020A /* libReactiveCocoaIO-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libReactiveCocoaIO-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F37CAAD16A4726F00F3020A /* ReactiveCocoaIO-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReactiveCocoaIO-Prefix.pch"; sourceTree = "<group>"; };
 		5F37CAAE16A4726F00F3020A /* ReactiveCocoaIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactiveCocoaIO.h; sourceTree = "<group>"; };
@@ -295,6 +304,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		49043AD9182FA2F300E7C12C /* RCIOFileManager */ = {
+			isa = PBXGroup;
+			children = (
+				49043ADA182FA31500E7C12C /* RCIOFileManager.h */,
+				49043ADB182FA31500E7C12C /* RCIOFileManager.m */,
+			);
+			name = RCIOFileManager;
+			sourceTree = "<group>";
+		};
 		5F37CA9B16A4726F00F3020A = {
 			isa = PBXGroup;
 			children = (
@@ -333,7 +351,8 @@
 			isa = PBXGroup;
 			children = (
 				5F37CAAE16A4726F00F3020A /* ReactiveCocoaIO.h */,
-				5FDBD73116A6990F00AB947A /* Main Classes */,
+				49043AD9182FA2F300E7C12C /* RCIOFileManager */,
+				5FDBD73116A6990F00AB947A /* RCIOItem */,
 				5FDBD73016A698FB00AB947A /* Helper Classes */,
 				5F37CAAC16A4726F00F3020A /* Supporting Files */,
 			);
@@ -353,6 +372,7 @@
 		5F37CAC016A4726F00F3020A /* ReactiveCocoaIOTests */ = {
 			isa = PBXGroup;
 			children = (
+				49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */,
 				5F37D0ED16A5641400F3020A /* RCIOItemExamples.h */,
 				5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */,
 				5F37D11A16A5692400F3020A /* RCIOItemSpec.m */,
@@ -530,7 +550,7 @@
 			name = "Helper Classes";
 			sourceTree = "<group>";
 		};
-		5FDBD73116A6990F00AB947A /* Main Classes */ = {
+		5FDBD73116A6990F00AB947A /* RCIOItem */ = {
 			isa = PBXGroup;
 			children = (
 				5F37CEAE16A480CE00F3020A /* RCIOItem.h */,
@@ -542,7 +562,7 @@
 				5F37CEA916A480CE00F3020A /* RCIODirectory+Private.h */,
 				5F37CEA816A480CE00F3020A /* RCIODirectory.m */,
 			);
-			name = "Main Classes";
+			name = RCIOItem;
 			sourceTree = "<group>";
 		};
 		5FF046D016D769CA00489997 /* ReactiveCocoa */ = {
@@ -565,6 +585,7 @@
 				5F37CEDC16A482A300F3020A /* RCIOFile.h in Headers */,
 				5F37CEDD16A482A300F3020A /* RCIODirectory.h in Headers */,
 				5FDBD73516A6994300AB947A /* RCIOWeakDictionary.h in Headers */,
+				49043ADD182FA31500E7C12C /* RCIOFileManager.h in Headers */,
 				5FDBD81216AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -578,6 +599,7 @@
 				5F37CF0416A4842800F3020A /* RCIOFile.h in Headers */,
 				5F37CF0516A4842800F3020A /* RCIODirectory.h in Headers */,
 				5FDBD73416A6994300AB947A /* RCIOWeakDictionary.h in Headers */,
+				49043ADC182FA31500E7C12C /* RCIOFileManager.h in Headers */,
 				5FDBD81116AC3AC600AB947A /* NSURL+TrailingSlash.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -876,6 +898,7 @@
 				5F37CEB216A480CE00F3020A /* RCIOFile.m in Sources */,
 				5F37CEB416A480CF00F3020A /* RCIOItem.m in Sources */,
 				5FDBD73716A6994300AB947A /* RCIOWeakDictionary.m in Sources */,
+				49043ADF182FA31500E7C12C /* RCIOFileManager.m in Sources */,
 				5FDBD81416AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -886,6 +909,7 @@
 			files = (
 				5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */,
 				5F37D11B16A5692400F3020A /* RCIOItemSpec.m in Sources */,
+				49043AE2182FA3B500E7C12C /* RCIOFileManagerSpec.m in Sources */,
 				5F37D11E16A5693B00F3020A /* RCIOFileSpec.m in Sources */,
 				5F37D12116A5696300F3020A /* RCIODirectorySpec.m in Sources */,
 				5FDBD73A16A6A9C900AB947A /* RCIOWeakDictionarySpec.m in Sources */,
@@ -901,6 +925,7 @@
 				5F37CF0016A4840400F3020A /* RCIOFile.m in Sources */,
 				5F37CF0116A4840400F3020A /* RCIODirectory.m in Sources */,
 				5FDBD73616A6994300AB947A /* RCIOWeakDictionary.m in Sources */,
+				49043ADE182FA31500E7C12C /* RCIOFileManager.m in Sources */,
 				5FDBD81316AC3AC600AB947A /* NSURL+TrailingSlash.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -911,6 +936,7 @@
 			files = (
 				5FD7DCBD1750B33F008710B4 /* RCIOItemExamples.m in Sources */,
 				5FD7DCBE1750B33F008710B4 /* RCIOItemSpec.m in Sources */,
+				49043AE3182FA3B500E7C12C /* RCIOFileManagerSpec.m in Sources */,
 				5FD7DCBF1750B33F008710B4 /* RCIOFileSpec.m in Sources */,
 				5FD7DCC01750B33F008710B4 /* RCIODirectorySpec.m in Sources */,
 				5FD7DCC11750B33F008710B4 /* RCIOWeakDictionarySpec.m in Sources */,
