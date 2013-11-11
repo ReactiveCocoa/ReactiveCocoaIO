@@ -14,31 +14,88 @@
 static NSString * const RCIOFileManagerSharedExamplesName = @"RCIOFileManagerSharedExamplesName";
 static NSString * const RCIOFileManagerSharedExamplesCreateFilesystemItemBlock = @"RCIOFileManagerSharedExamplesCreateFilesystemItemBlock";
 
+static NSString * const RCIOFileManagerSharedReactionExamples = @"RCIOFileManagerSharedReactionExamples";
+static NSString * const RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL = @"RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL";
+static NSString * const RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock = @"RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock";
+static NSString * const RCIOFileManagerSharedReactionExamplesMoveBlock = @"RCIOFileManagerSharedReactionExamplesMoveBlock";
+static NSString * const RCIOFileManagerSharedReactionExamplesCopyBlock = @"RCIOFileManagerSharedReactionExamplesCopyBlock";
+static NSString * const RCIOFileManagerSharedReactionExamplesRemoveBlock = @"RCIOFileManagerSharedReactionExamplesRemoveBlock";
+
 SharedExampleGroupsBegin(RCIOFileManager)
+
+sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
+	describe(@"should react to", ^{
+		describe(@"the directory being changed", ^{
+			it(@"by moving", ^{
+
+			});
+
+			it(@"by copying", ^{
+
+			});
+
+			it(@"by removing", ^{
+
+			});
+		});
+
+		describe(@"the contents of the directory being changed", ^{
+			it(@"by creating an item in it", ^{
+
+			});
+
+			it(@"by moving an item into it", ^{
+
+			});
+
+			it(@"by moving an item out of it", ^{
+
+			});
+
+			it(@"by copying an item into it", ^{
+
+			});
+
+			it(@"by removing an item in it", ^{
+
+			});
+		});
+
+		describe(@"the contents of a subdirectory being changed", ^{
+			it(@"by creating an item in it", ^{
+
+			});
+
+			it(@"by moving an item into it", ^{
+
+			});
+
+			it(@"by moving an item out of it", ^{
+
+			});
+
+			it(@"by copying an item into it", ^{
+
+			});
+
+			it(@"by removing an item in it", ^{
+				
+			});
+		});
+	});
+});
 
 sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	__block NSURL *testRootDirectoryURL;
-	__block NSURL *directoryURL;
-	__block NSURL *itemURL;
-	__block NSURL *newRootItemURL;
-	__block NSURL *newItemURL;
 	__block void(^createFilesystemItem)(NSURL *);
 	__block BOOL success;
 	__block NSError *error;
 
 	before(^{
 		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
-		directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
-		itemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
-		newRootItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"newItem"];
-		newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
 		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateFilesystemItemBlock];
 		success = NO;
 		error = nil;
-
-		[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
-		[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
-		createFilesystemItem(itemURL);
 	});
 
 	after(^{
@@ -46,6 +103,22 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	});
 
 	describe(@"file management", ^{
+		__block NSURL *directoryURL;
+		__block NSURL *itemURL;
+		__block NSURL *newRootItemURL;
+		__block NSURL *newItemURL;
+
+		before(^{
+			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
+			itemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
+			newRootItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"newItem"];
+			newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
+
+			[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+			createFilesystemItem(itemURL);
+		});
+
 		describe(@"moving", ^{
 			it(@"should not move an item if the signal is not subscribed to", ^{
 				[RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL];
@@ -174,7 +247,52 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	});
 
 	describe(@"directory listings", ^{
-		
+		it(@"should list items", ^{
+
+		});
+
+		it(@"should skip subdirectory descendants", ^{
+
+		});
+
+		it(@"should skip hidden items", ^{
+
+		});
+
+		itShouldBehaveLike(RCIOFileManagerSharedReactionExamples, ^{
+			return @{
+				RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL: testRootDirectoryURL,
+				RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock: createFilesystemItem,
+				RCIOFileManagerSharedReactionExamplesMoveBlock: [^(NSURL *source, NSURL *destination) {
+					[[RCIOFileManager moveItemAtURL:source toURL:destination] subscribeCompleted:^{}];
+				} copy],
+				RCIOFileManagerSharedReactionExamplesCopyBlock: [^(NSURL *source, NSURL *destination) {
+					[[RCIOFileManager copyItemAtURL:source toURL:destination] subscribeCompleted:^{}];
+				} copy],
+				RCIOFileManagerSharedReactionExamplesRemoveBlock: [^(NSURL *url) {
+					[[RCIOFileManager removeItemAtURL:url] subscribeCompleted:^{}];
+				} copy]
+			};
+		});
+
+#if !TARGET_OS_IPHONE
+		// If we're on OS X this should work even without using RCIOFileManager.
+		itShouldBehaveLike(RCIOFileManagerSharedReactionExamples, ^{
+			return @{
+				RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL: testRootDirectoryURL,
+				RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock: createFilesystemItem,
+				RCIOFileManagerSharedReactionExamplesMoveBlock: [^(NSURL *source, NSURL *destination) {
+					[[[NSFileManager alloc] init] moveItemAtURL:source toURL:destination error:NULL];
+				} copy],
+				RCIOFileManagerSharedReactionExamplesCopyBlock: [^(NSURL *source, NSURL *destination) {
+					[[[NSFileManager alloc] init] copyItemAtURL:source toURL:destination error:NULL];
+				} copy],
+				RCIOFileManagerSharedReactionExamplesRemoveBlock: [^(NSURL *url) {
+					[[[NSFileManager alloc] init] removeItemAtURL:url error:NULL];
+				} copy]
+			};
+		});
+#endif
 	});
 });
 
