@@ -12,11 +12,11 @@
 #import "RCIOTestUtilities.h"
 
 static NSString * const RCIOFileManagerSharedExamplesName = @"RCIOFileManagerSharedExamplesName";
-static NSString * const RCIOFileManagerSharedExamplesCreateFilesystemItemBlock = @"RCIOFileManagerSharedExamplesCreateFilesystemItemBlock";
+static NSString * const RCIOFileManagerSharedExamplesCreateBlock = @"RCIOFileManagerSharedExamplesCreateBlock";
 
 static NSString * const RCIOFileManagerSharedReactionExamples = @"RCIOFileManagerSharedReactionExamples";
 static NSString * const RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL = @"RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL";
-static NSString * const RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock = @"RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock";
+static NSString * const RCIOFileManagerSharedReactionExamplesCreateBlock = @"RCIOFileManagerSharedReactionExamplesCreateBlock";
 static NSString * const RCIOFileManagerSharedReactionExamplesMoveBlock = @"RCIOFileManagerSharedReactionExamplesMoveBlock";
 static NSString * const RCIOFileManagerSharedReactionExamplesCopyBlock = @"RCIOFileManagerSharedReactionExamplesCopyBlock";
 static NSString * const RCIOFileManagerSharedReactionExamplesRemoveBlock = @"RCIOFileManagerSharedReactionExamplesRemoveBlock";
@@ -24,62 +24,309 @@ static NSString * const RCIOFileManagerSharedReactionExamplesRemoveBlock = @"RCI
 SharedExampleGroupsBegin(RCIOFileManager)
 
 sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
+	__block NSURL *testRootDirectoryURL;
+	__block void(^createFilesystemItem)(NSURL *);
+	__block void(^moveFilesystemItem)(NSURL *, NSURL *);
+	__block void(^copyFilesystemItem)(NSURL *, NSURL *);
+	__block void(^removeFilesystemItem)(NSURL *);
+
+	__block void(^subscribeToContentsOfDirectoryAtURL)(NSURL *);
+
+	__block NSSet *result;
+	__block NSError *outerError;
+	__block BOOL outerErrored;
+	__block BOOL outerCompleted;
+	__block BOOL innerSuccess;
+	__block NSError *innerError;
+
+
+	before(^{
+		testRootDirectoryURL = data[RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL];
+		createFilesystemItem = data[RCIOFileManagerSharedReactionExamplesCreateBlock];
+		moveFilesystemItem = data[RCIOFileManagerSharedReactionExamplesMoveBlock];
+		copyFilesystemItem = data[RCIOFileManagerSharedReactionExamplesCopyBlock];
+		removeFilesystemItem = data[RCIOFileManagerSharedReactionExamplesRemoveBlock];
+
+		subscribeToContentsOfDirectoryAtURL = ^(NSURL *url) {
+			[[[RCIOFileManager contentsOfDirectoryAtURL:url options:0] skip:1] subscribeNext:^(RACSignal *signal) {
+				result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&innerSuccess error:&innerError]];
+			} error:^(NSError *error) {
+				outerError = error;
+				outerErrored = YES;
+			} completed:^{
+				outerCompleted = YES;
+			}];
+		};
+
+		result = nil;
+		outerError = nil;
+		outerErrored = NO;
+		outerCompleted = NO;
+		innerSuccess = NO;
+		innerError = nil;
+	});
+
+	after(^{
+		expect(outerError).to.beNil();
+		expect(outerErrored).to.beFalsy();
+		expect(outerCompleted).to.beFalsy();
+	});
+
 	describe(@"should react to", ^{
+		__block NSURL *directoryURL;
+
+		before(^{
+			directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
+			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+		});
+
 		describe(@"the directory being changed", ^{
-			it(@"by moving", ^{
+			__block NSURL *newDirectoryURL;
 
+			before(^{
+				newDirectoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"newDirectory"];
 			});
 
-			it(@"by copying", ^{
+			it(@"by moving from the url", ^{
+				subscribeToContentsOfDirectoryAtURL(directoryURL);
 
+				moveFilesystemItem(directoryURL, newDirectoryURL);
+
+				expect(innerError).willNot.beNil();
+				expect(innerSuccess).to.beFalsy();
 			});
 
-			it(@"by removing", ^{
+			it(@"by moving to the url", ^{
+				NSString *itemName = @"item";
+				NSURL *itemURL = [directoryURL URLByAppendingPathComponent:itemName];
+				NSURL *newItemURL = [newDirectoryURL URLByAppendingPathComponent:itemName];
+				createFilesystemItem(itemURL);
 
+				subscribeToContentsOfDirectoryAtURL(newDirectoryURL);
+
+				moveFilesystemItem(directoryURL, newDirectoryURL);
+
+				expect(result).will.equal([NSSet setWithArray:@[ newItemURL ]]);
+				expect(innerError).to.beNil();
+				expect(innerSuccess).to.beTruthy();
+			});
+
+			it(@"by copying to the url", ^{
+				NSString *itemName = @"item";
+				NSURL *itemURL = [directoryURL URLByAppendingPathComponent:itemName];
+				NSURL *newItemURL = [newDirectoryURL URLByAppendingPathComponent:itemName];
+				createFilesystemItem(itemURL);
+
+				subscribeToContentsOfDirectoryAtURL(newDirectoryURL);
+
+				copyFilesystemItem(directoryURL, newDirectoryURL);
+
+				expect(result).will.equal([NSSet setWithArray:@[ newItemURL ]]);
+				expect(innerError).to.beNil();
+				expect(innerSuccess).to.beTruthy();
+			});
+
+			it(@"by removing from the url", ^{
+				subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+				removeFilesystemItem(directoryURL);
+
+				expect(innerError).willNot.beNil();
+				expect(innerSuccess).to.beFalsy();
 			});
 		});
 
-		describe(@"the contents of the directory being changed", ^{
-			it(@"by creating an item in it", ^{
+		describe(@"the contents of", ^{
+			__block NSURL *itemURLOutsideDirectory;
 
+			before(^{
+				itemURLOutsideDirectory = [testRootDirectoryURL URLByAppendingPathComponent:@"item"];
 			});
 
-			it(@"by moving an item into it", ^{
+			describe(@"the directory being changed", ^{
+				__block NSURL *itemURLInsideDirectory;
+				__block NSURL *anotherItemURLInsideDirectory;
 
+				before(^{
+					itemURLInsideDirectory = [directoryURL URLByAppendingPathComponent:@"item"];
+					anotherItemURLInsideDirectory = [directoryURL URLByAppendingPathComponent:@"another item"];
+				});
+
+				it(@"by creating an item in it", ^{
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					createFilesystemItem(itemURLInsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by moving an item into it", ^{
+					createFilesystemItem(itemURLOutsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					moveFilesystemItem(itemURLOutsideDirectory, itemURLInsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by moving an item out of it", ^{
+					createFilesystemItem(itemURLInsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					moveFilesystemItem(itemURLInsideDirectory, itemURLOutsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by moving an item around in it", ^{
+					createFilesystemItem(itemURLInsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					moveFilesystemItem(itemURLInsideDirectory, anotherItemURLInsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[ anotherItemURLInsideDirectory ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by copying an item into it", ^{
+					createFilesystemItem(itemURLOutsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					copyFilesystemItem(itemURLOutsideDirectory, itemURLInsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by copying an item around in it", ^{
+					createFilesystemItem(itemURLInsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					copyFilesystemItem(itemURLInsideDirectory, anotherItemURLInsideDirectory);
+
+					expect(result).will.equal(([NSSet setWithArray:@[ itemURLInsideDirectory, anotherItemURLInsideDirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by removing an item in it", ^{
+					createFilesystemItem(itemURLInsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					removeFilesystemItem(itemURLInsideDirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
 			});
 
-			it(@"by moving an item out of it", ^{
+			describe(@"a subdirectory being changed", ^{
+				__block NSURL *subdirectoryURL;
+				__block NSURL *itemURLInsideSubdirectory;
+				__block NSURL *anotherItemURLInsideSubdirectory;
 
-			});
+				before(^{
+					subdirectoryURL = [directoryURL URLByAppendingPathComponent:@"subdirectory"];
+					itemURLInsideSubdirectory = [subdirectoryURL URLByAppendingPathComponent:@"item"];
+					anotherItemURLInsideSubdirectory = [subdirectoryURL URLByAppendingPathComponent:@"another item"];
+				});
 
-			it(@"by copying an item into it", ^{
+				it(@"by creating an item in it", ^{
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
 
-			});
+					createFilesystemItem(itemURLInsideSubdirectory);
 
-			it(@"by removing an item in it", ^{
+					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
 
-			});
-		});
+				it(@"by moving an item into it", ^{
+					createFilesystemItem(itemURLOutsideDirectory);
 
-		describe(@"the contents of a subdirectory being changed", ^{
-			it(@"by creating an item in it", ^{
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
 
-			});
+					moveFilesystemItem(itemURLOutsideDirectory, itemURLInsideSubdirectory);
 
-			it(@"by moving an item into it", ^{
+					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
 
-			});
+				it(@"by moving an item out of it", ^{
+					createFilesystemItem(itemURLInsideSubdirectory);
 
-			it(@"by moving an item out of it", ^{
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
 
-			});
+					moveFilesystemItem(itemURLInsideSubdirectory, itemURLOutsideDirectory);
 
-			it(@"by copying an item into it", ^{
+					expect(result).will.equal([NSSet setWithArray:@[ subdirectoryURL ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
 
-			});
+				it(@"by moving an item around in it", ^{
+					createFilesystemItem(itemURLInsideSubdirectory);
 
-			it(@"by removing an item in it", ^{
-				
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					moveFilesystemItem(itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory);
+
+					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, anotherItemURLInsideSubdirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by copying an item into it", ^{
+					createFilesystemItem(itemURLOutsideDirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					copyFilesystemItem(itemURLOutsideDirectory, itemURLInsideSubdirectory);
+
+					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by copying an item around in it", ^{
+					createFilesystemItem(itemURLInsideSubdirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					copyFilesystemItem(itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory);
+
+					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory ]]));
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
+
+				it(@"by removing an item in it", ^{
+					createFilesystemItem(itemURLInsideSubdirectory);
+
+					subscribeToContentsOfDirectoryAtURL(directoryURL);
+
+					removeFilesystemItem(itemURLInsideSubdirectory);
+
+					expect(result).will.equal([NSSet setWithArray:@[ subdirectoryURL ]]);
+					expect(innerError).to.beNil();
+					expect(innerSuccess).to.beTruthy();
+				});
 			});
 		});
 	});
@@ -93,7 +340,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 
 	before(^{
 		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
-		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateFilesystemItemBlock];
+		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateBlock];
 		success = NO;
 		error = nil;
 	});
@@ -150,6 +397,17 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
 
+			it(@"should not move an item if one exists at the destination", ^{
+				createFilesystemItem(newItemURL);
+
+				[[RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+				
+				expect(error).notTo.beNil();
+				expect(success).to.beFalsy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+			});
+
 			it(@"should move an item to a different directory", ^{
 				[[RCIOFileManager moveItemAtURL:itemURL toURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
 
@@ -195,6 +453,17 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+			});
+
+			it(@"should not copy an item if one exists at the destination", ^{
+				createFilesystemItem(newItemURL);
+
+				[[RCIOFileManager copyItemAtURL:itemURL toURL:newItemURL] asynchronousFirstOrDefault:nil success:&success error:&error];
+
+				expect(error).notTo.beNil();
+				expect(success).to.beFalsy();
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
 			});
@@ -248,21 +517,96 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 
 	describe(@"directory listings", ^{
 		it(@"should list items", ^{
+			NSURL *directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
+			NSURL *itemURL = [directoryURL URLByAppendingPathComponent:@"item"];
+			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+			createFilesystemItem(itemURL);
 
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(signal).notTo.beNil();
+
+			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(result).to.equal(([NSSet setWithArray:@[ directoryURL, itemURL ]]));
+		});
+
+		it(@"should skip resource forks", ^{
+			NSURL *resourceForkURL = [testRootDirectoryURL URLByAppendingPathComponent:@"._resourceFork"];
+			createFilesystemItem(resourceForkURL);
+
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(signal).notTo.beNil();
+
+			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(result).to.equal(([NSSet setWithArray:@[]]));
 		});
 
 		it(@"should skip subdirectory descendants", ^{
+			NSURL *directoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"directory"];
+			NSURL *itemURL = [directoryURL URLByAppendingPathComponent:@"item"];
+			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+			createFilesystemItem(itemURL);
 
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(signal).notTo.beNil();
+
+			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(result).to.equal(([NSSet setWithArray:@[ directoryURL ]]));
 		});
 
 		it(@"should skip hidden items", ^{
+			NSURL *hiddenItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@".hiddenItem"];
+			createFilesystemItem(hiddenItemURL);
 
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(signal).notTo.beNil();
+
+			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(result).to.equal(([NSSet setWithArray:@[]]));
+		});
+
+		it(@"should error on the inner signal if a directory doesn't exist", ^{
+			NSURL *nonExistingDirectoryURL = [testRootDirectoryURL URLByAppendingPathComponent:@"does not exist"];
+
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:nonExistingDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).to.beNil();
+			expect(success).to.beTruthy();
+			expect(signal).notTo.beNil();
+
+			[[signal collect] firstOrDefault:nil success:&success error:&error];
+
+			expect(error).toNot.beNil();
+			expect(success).toNot.beTruthy();
 		});
 
 		itShouldBehaveLike(RCIOFileManagerSharedReactionExamples, ^{
 			return @{
 				RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL: testRootDirectoryURL,
-				RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock: createFilesystemItem,
+				RCIOFileManagerSharedReactionExamplesCreateBlock: createFilesystemItem,
 				RCIOFileManagerSharedReactionExamplesMoveBlock: [^(NSURL *source, NSURL *destination) {
 					[[RCIOFileManager moveItemAtURL:source toURL:destination] subscribeCompleted:^{}];
 				} copy],
@@ -280,7 +624,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 		itShouldBehaveLike(RCIOFileManagerSharedReactionExamples, ^{
 			return @{
 				RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL: testRootDirectoryURL,
-				RCIOFileManagerSharedReactionExamplesCreateFilesystemItemBlock: createFilesystemItem,
+				RCIOFileManagerSharedReactionExamplesCreateBlock: createFilesystemItem,
 				RCIOFileManagerSharedReactionExamplesMoveBlock: [^(NSURL *source, NSURL *destination) {
 					[[[NSFileManager alloc] init] moveItemAtURL:source toURL:destination error:NULL];
 				} copy],
@@ -300,11 +644,11 @@ SharedExampleGroupsEnd
 
 SpecBegin(RCIOFileManager)
 
-itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateFilesystemItemBlock: [^(NSURL *url) {
+itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateBlock: [^(NSURL *url) {
 	touch(url);
 } copy] });
 
-itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateFilesystemItemBlock: [^(NSURL *url) {
+itShouldBehaveLike(RCIOFileManagerSharedExamplesName, @{ RCIOFileManagerSharedExamplesCreateBlock: [^(NSURL *url) {
 	[[[NSFileManager alloc] init] createDirectoryAtURL:url withIntermediateDirectories:YES attributes:nil error:NULL];
 } copy] });
 
