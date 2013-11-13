@@ -19,3 +19,11 @@ BOOL itemExistsAtURL(NSURL *url) {
 BOOL touch(NSURL *url) {
 	return [@"" writeToURL:url atomically:NO encoding:NSUTF8StringEncoding error:NULL];
 }
+
+NSSet *pathSetFromURLArray(NSArray *array) {
+	NSMutableSet *set = [NSMutableSet setWithCapacity:array.count];
+	for (NSURL *url in array) {
+    [set addObject:url.path];
+	}
+	return set;
+}

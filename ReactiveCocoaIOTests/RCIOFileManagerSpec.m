@@ -49,7 +49,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 		subscribeToContentsOfDirectoryAtURL = ^(NSURL *url) {
 			[[[RCIOFileManager contentsOfDirectoryAtURL:url options:0] skip:1] subscribeNext:^(RACSignal *signal) {
-				result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&innerSuccess error:&innerError]];
+				result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&innerSuccess error:&innerError]);
 			} error:^(NSError *error) {
 				outerError = error;
 				outerErrored = YES;
@@ -106,7 +106,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 				moveFilesystemItem(directoryURL, newDirectoryURL);
 
-				expect(result).will.equal([NSSet setWithArray:@[ newItemURL ]]);
+				expect(result).will.equal(pathSetFromURLArray(@[ newItemURL ]));
 				expect(innerError).to.beNil();
 				expect(innerSuccess).to.beTruthy();
 			});
@@ -121,7 +121,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 				copyFilesystemItem(directoryURL, newDirectoryURL);
 
-				expect(result).will.equal([NSSet setWithArray:@[ newItemURL ]]);
+				expect(result).will.equal(pathSetFromURLArray(@[ newItemURL ]));
 				expect(innerError).to.beNil();
 				expect(innerSuccess).to.beTruthy();
 			});
@@ -157,7 +157,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					createFilesystemItem(itemURLInsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ itemURLInsideDirectory ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -169,7 +169,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLOutsideDirectory, itemURLInsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ itemURLInsideDirectory ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -181,7 +181,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLInsideDirectory, itemURLOutsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[]]);
+					expect(result).will.equal(pathSetFromURLArray(@[]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -193,7 +193,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLInsideDirectory, anotherItemURLInsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ anotherItemURLInsideDirectory ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ anotherItemURLInsideDirectory ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -205,7 +205,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					copyFilesystemItem(itemURLOutsideDirectory, itemURLInsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ itemURLInsideDirectory ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ itemURLInsideDirectory ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -217,7 +217,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					copyFilesystemItem(itemURLInsideDirectory, anotherItemURLInsideDirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ itemURLInsideDirectory, anotherItemURLInsideDirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ itemURLInsideDirectory, anotherItemURLInsideDirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -229,7 +229,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					removeFilesystemItem(itemURLInsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[]]);
+					expect(result).will.equal(pathSetFromURLArray(@[]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -251,7 +251,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					createFilesystemItem(itemURLInsideSubdirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ subdirectoryURL, itemURLInsideSubdirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -263,7 +263,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLOutsideDirectory, itemURLInsideSubdirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ subdirectoryURL, itemURLInsideSubdirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -275,7 +275,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLInsideSubdirectory, itemURLOutsideDirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ subdirectoryURL ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ subdirectoryURL ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -287,7 +287,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					moveFilesystemItem(itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, anotherItemURLInsideSubdirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ subdirectoryURL, anotherItemURLInsideSubdirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -299,7 +299,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					copyFilesystemItem(itemURLOutsideDirectory, itemURLInsideSubdirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ subdirectoryURL, itemURLInsideSubdirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -311,7 +311,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					copyFilesystemItem(itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory);
 
-					expect(result).will.equal(([NSSet setWithArray:@[ subdirectoryURL, itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory ]]));
+					expect(result).will.equal((pathSetFromURLArray(@[ subdirectoryURL, itemURLInsideSubdirectory, anotherItemURLInsideSubdirectory ])));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -323,7 +323,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 					removeFilesystemItem(itemURLInsideSubdirectory);
 
-					expect(result).will.equal([NSSet setWithArray:@[ subdirectoryURL ]]);
+					expect(result).will.equal(pathSetFromURLArray(@[ subdirectoryURL ]));
 					expect(innerError).to.beNil();
 					expect(innerSuccess).to.beTruthy();
 				});
@@ -339,7 +339,12 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	__block NSError *error;
 
 	before(^{
-		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
+		testRootDirectoryURL = [[[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByResolvingSymlinksInPath] URLByAppendingPathComponent:randomString()];
+		[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
+		// -[NSURL URLByResolvingSymlinksInPath] doesn't resolve /var to
+		// /private/var for some reason, so do this instead.
+		testRootDirectoryURL = [[[[[[NSFileManager alloc] init] contentsOfDirectoryAtURL:testRootDirectoryURL.URLByDeletingLastPathComponent includingPropertiesForKeys:nil options:NSDirectoryEnumerationSkipsSubdirectoryDescendants | NSDirectoryEnumerationSkipsPackageDescendants error:NULL] firstObject] URLByDeletingLastPathComponent] URLByAppendingPathComponent:testRootDirectoryURL.lastPathComponent];
+
 		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateBlock];
 		success = NO;
 		error = nil;
@@ -361,7 +366,6 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 			newRootItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@"newItem"];
 			newItemURL = [directoryURL URLByAppendingPathComponent:@"newItem"];
 
-			[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 			createFilesystemItem(itemURL);
 		});
@@ -423,7 +427,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 				expect(itemExistsAtURL(itemURL)).to.beFalsy();
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newRootItemURL)).to.beTruthy();
 			});
 		});
 
@@ -447,7 +451,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 
 				[[[NSFileManager alloc] init] removeItemAtURL:newItemURL error:NULL];
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newItemURL)).to.beFalsy();
 
 				[signal asynchronousFirstOrDefault:nil success:&success error:&error];
 
@@ -483,7 +487,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 				expect(error).to.beNil();
 				expect(success).to.beTruthy();
 				expect(itemExistsAtURL(itemURL)).to.beTruthy();
-				expect(itemExistsAtURL(newItemURL)).to.beTruthy();
+				expect(itemExistsAtURL(newRootItemURL)).to.beTruthy();
 			});
 		});
 
@@ -491,7 +495,7 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 			it(@"should not remove an item if the signal is not subscribed to", ^{
 				[RCIOFileManager removeItemAtURL:itemURL];
 
-				expect(itemExistsAtURL(itemURL)).to.beFalsy();
+				expect(itemExistsAtURL(itemURL)).to.beTruthy();
 			});
 
 			it(@"should remove an item twice if the signal is subscribed to twice", ^{
@@ -528,11 +532,11 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 			expect(success).to.beTruthy();
 			expect(signal).notTo.beNil();
 
-			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+			NSSet *result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&success error:&error]);
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
-			expect(result).to.equal(([NSSet setWithArray:@[ directoryURL, itemURL ]]));
+			expect(result).to.equal((pathSetFromURLArray(@[ directoryURL, itemURL ])));
 		});
 
 		it(@"should skip resource forks", ^{
@@ -545,11 +549,11 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 			expect(success).to.beTruthy();
 			expect(signal).notTo.beNil();
 
-			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+			NSSet *result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&success error:&error]);
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
-			expect(result).to.equal(([NSSet setWithArray:@[]]));
+			expect(result).to.equal((pathSetFromURLArray(@[])));
 		});
 
 		it(@"should skip subdirectory descendants", ^{
@@ -558,34 +562,34 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 			[[[NSFileManager alloc] init] createDirectoryAtURL:directoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 			createFilesystemItem(itemURL);
 
-			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:NSDirectoryEnumerationSkipsSubdirectoryDescendants] firstOrDefault:nil success:&success error:&error];
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
 			expect(signal).notTo.beNil();
 
-			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+			NSSet *result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&success error:&error]);
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
-			expect(result).to.equal(([NSSet setWithArray:@[ directoryURL ]]));
+			expect(result).to.equal((pathSetFromURLArray(@[ directoryURL ])));
 		});
 
 		it(@"should skip hidden items", ^{
 			NSURL *hiddenItemURL = [testRootDirectoryURL URLByAppendingPathComponent:@".hiddenItem"];
 			createFilesystemItem(hiddenItemURL);
 
-			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:0] firstOrDefault:nil success:&success error:&error];
+			RACSignal *signal = [[RCIOFileManager contentsOfDirectoryAtURL:testRootDirectoryURL options:NSDirectoryEnumerationSkipsHiddenFiles] firstOrDefault:nil success:&success error:&error];
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
 			expect(signal).notTo.beNil();
 
-			NSSet *result = [NSSet setWithArray:[[signal collect] firstOrDefault:nil success:&success error:&error]];
+			NSSet *result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&success error:&error]);
 
 			expect(error).to.beNil();
 			expect(success).to.beTruthy();
-			expect(result).to.equal(([NSSet setWithArray:@[]]));
+			expect(result).to.equal((pathSetFromURLArray(@[])));
 		});
 
 		it(@"should error on the inner signal if a directory doesn't exist", ^{

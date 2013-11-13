@@ -16,3 +16,6 @@ extern BOOL itemExistsAtURL(NSURL *url);
 
 // Creates an empty file at the given url. The containing directory must exist.
 extern BOOL touch(NSURL *url);
+
+// Returns a set of paths of the urls in the array.
+extern NSSet *pathSetFromURLArray(NSArray *array);
