@@ -10,6 +10,19 @@
 
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+static void fsEventsCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
+	void (^callbackBlock)(void) = (__bridge void (^)(void))(clientCallBackInfo);
+	callbackBlock();
+}
+
+static const void *copyCallbackBlock(const void *block) {
+	return _Block_copy(block);
+}
+
+static void releaseCallbackBlock(const void *block) {
+	_Block_release(block);
+}
+
 @implementation RCIOFileManager
 
 + (RACSignal *)contentsOfDirectoryAtURL:(NSURL *)url options:(NSDirectoryEnumerationOptions)options {
@@ -24,8 +37,30 @@
 			}];
 			return [enumerator.rac_promise.deferred subscribe:innerSubscriber];
 		}];
+
+		void (^callbackBlock)(void) = ^{
+			[outerSubscriber sendNext:signal];
+		};
+
+		FSEventStreamContext context;
+		context.version = 0;
+		context.info = (__bridge void *)callbackBlock;
+		context.retain = copyCallbackBlock;
+		context.release = releaseCallbackBlock;
+		context.copyDescription = NULL;
+
+		FSEventStreamRef stream = FSEventStreamCreate(kCFAllocatorDefault, fsEventsCallback, &context, (__bridge CFArrayRef)(@[ url.path ]), kFSEventStreamEventIdSinceNow, 3.0,  kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagWatchRoot);
+
+		FSEventStreamScheduleWithRunLoop(stream, [NSRunLoop currentRunLoop].getCFRunLoop, kCFRunLoopDefaultMode);
+		FSEventStreamStart(stream);
+
 		[outerSubscriber sendNext:signal];
-		return nil;
+
+		return [RACDisposable disposableWithBlock:^{
+			FSEventStreamStop(stream);
+			FSEventStreamInvalidate(stream);
+			FSEventStreamRelease(stream);
+		}];
 	}];
 }
 

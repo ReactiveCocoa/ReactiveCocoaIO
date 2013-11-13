@@ -15,6 +15,8 @@
 		49043AE3182FA3B500E7C12C /* RCIOFileManagerSpec.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043AE1182FA3B500E7C12C /* RCIOFileManagerSpec.m */; };
 		49043AEB182FC93D00E7C12C /* RCIOTestUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043AEA182FC93D00E7C12C /* RCIOTestUtilities.m */; };
 		49043AEC182FC93D00E7C12C /* RCIOTestUtilities.m in Sources */ = {isa = PBXBuildFile; fileRef = 49043AEA182FC93D00E7C12C /* RCIOTestUtilities.m */; };
+		495E39271833E9EE00B61AE8 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 495E39261833E9EE00B61AE8 /* CoreServices.framework */; };
+		495E39361833EA2400B61AE8 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 495E39261833E9EE00B61AE8 /* CoreServices.framework */; };
 		5F37CAC516A4726F00F3020A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5F37CAC316A4726F00F3020A /* InfoPlist.strings */; };
 		5F37CAC816A4726F00F3020A /* RCIOItemExamples.m in Sources */ = {isa = PBXBuildFile; fileRef = 5F37CAC716A4726F00F3020A /* RCIOItemExamples.m */; };
 		5F37CAD416A472E100F3020A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5F37CAD316A472E000F3020A /* Foundation.framework */; };
@@ -206,6 +208,7 @@
 		49043AE9182FC93D00E7C12C /* RCIOTestUtilities.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RCIOTestUtilities.h; sourceTree = "<group>"; };
 		49043AEA182FC93D00E7C12C /* RCIOTestUtilities.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RCIOTestUtilities.m; sourceTree = "<group>"; };
 		49043B16183010A200E7C12C /* Test.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Test.xcconfig; sourceTree = "<group>"; };
+		495E39261833E9EE00B61AE8 /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = System/Library/Frameworks/CoreServices.framework; sourceTree = SDKROOT; };
 		5F37CAA616A4726F00F3020A /* libReactiveCocoaIO-iOS.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libReactiveCocoaIO-iOS.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		5F37CAAD16A4726F00F3020A /* ReactiveCocoaIO-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ReactiveCocoaIO-Prefix.pch"; sourceTree = "<group>"; };
 		5F37CAAE16A4726F00F3020A /* ReactiveCocoaIO.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReactiveCocoaIO.h; sourceTree = "<group>"; };
@@ -274,6 +277,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				495E39361833EA2400B61AE8 /* CoreServices.framework in Frameworks */,
 				5F7A4B0A170251D60000D203 /* ReactiveCocoa.framework in Frameworks */,
 				5F37D11316A5660F00F3020A /* ReactiveCocoaIO.framework in Frameworks */,
 				5F37CEA316A47E0600F3020A /* libExpecta.a in Frameworks */,
@@ -287,6 +291,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				495E39271833E9EE00B61AE8 /* CoreServices.framework in Frameworks */,
 				5F7A4B09170251CA0000D203 /* ReactiveCocoa.framework in Frameworks */,
 				5FF046CB16D766D600489997 /* Foundation.framework in Frameworks */,
 			);
@@ -407,6 +412,7 @@
 			children = (
 				5F37CAD316A472E000F3020A /* Foundation.framework */,
 				5F37CEA016A47DE300F3020A /* SenTestingKit.framework */,
+				495E39261833E9EE00B61AE8 /* CoreServices.framework */,
 				5FD7DCCC1750B46D008710B4 /* UIKit.framework */,
 			);
 			name = Apple;
