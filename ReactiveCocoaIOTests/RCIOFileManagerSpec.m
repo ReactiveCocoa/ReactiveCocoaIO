@@ -339,11 +339,8 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 	__block NSError *error;
 
 	before(^{
-		testRootDirectoryURL = [[[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByResolvingSymlinksInPath] URLByAppendingPathComponent:randomString()];
+		testRootDirectoryURL = [[NSURL fileURLWithPath:NSTemporaryDirectory()] URLByAppendingPathComponent:randomString()];
 		[[[NSFileManager alloc] init] createDirectoryAtURL:testRootDirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
-		// -[NSURL URLByResolvingSymlinksInPath] doesn't resolve /var to
-		// /private/var for some reason, so do this instead.
-		testRootDirectoryURL = [[[[[[NSFileManager alloc] init] contentsOfDirectoryAtURL:testRootDirectoryURL.URLByDeletingLastPathComponent includingPropertiesForKeys:nil options:NSDirectoryEnumerationSkipsSubdirectoryDescendants | NSDirectoryEnumerationSkipsPackageDescendants error:NULL] firstObject] URLByDeletingLastPathComponent] URLByAppendingPathComponent:testRootDirectoryURL.lastPathComponent];
 
 		createFilesystemItem = data[RCIOFileManagerSharedExamplesCreateBlock];
 		success = NO;

@@ -23,7 +23,7 @@ BOOL touch(NSURL *url) {
 NSSet *pathSetFromURLArray(NSArray *array) {
 	NSMutableSet *set = [NSMutableSet setWithCapacity:array.count];
 	for (NSURL *url in array) {
-    [set addObject:url.path];
+    [set addObject:url.URLByResolvingSymlinksInPath.path];
 	}
 	return set;
 }
