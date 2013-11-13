@@ -10,6 +10,18 @@
 
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
+typedef struct {
+	__unsafe_unretained NSString const *underlyingError;
+	__unsafe_unretained NSString const *fsEventsError;
+} RCIOFileManagerErrorMessagesList;
+
+@interface RCIOFileManager ()
+
+// The list of error messages for errors sent by RCIOFileManager.
++ (RCIOFileManagerErrorMessagesList)errorMessages;
+
+@end
+
 static void fsEventsCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
 	void (^callbackBlock)(void) = (__bridge void (^)(void))(clientCallBackInfo);
 	callbackBlock();
@@ -25,12 +37,30 @@ static void releaseCallbackBlock(const void *block) {
 
 @implementation RCIOFileManager
 
++ (NSString *)errorDomain {
+	return @"RCIOFileManagerErrorDomain";
+}
+
++ (RCIOFileManagerErrorCodesList)errorCodes {
+	return (RCIOFileManagerErrorCodesList){
+		.underlyingError = -1,
+		.fsEventsError = 1,
+	};
+}
+
++ (RCIOFileManagerErrorMessagesList)errorMessages {
+	return (RCIOFileManagerErrorMessagesList){
+		@"a call to the underlying framework code failed, check NSUnderlyingErrorKey for details",
+		@"failed to interface with the FSEvents API",
+	};
+}
+
 + (RACSignal *)contentsOfDirectoryAtURL:(NSURL *)url options:(NSDirectoryEnumerationOptions)options {
 	return [RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> outerSubscriber) {
 		RACSignal *signal = [RACSignal createSignal:^(id<RACSubscriber> innerSubscriber) {
 			NSDirectoryEnumerator *enumerator = [[[NSFileManager alloc] init] enumeratorAtURL:url includingPropertiesForKeys:nil options:options errorHandler:^BOOL(NSURL *errorURL, NSError *error) {
 				if (errorURL == nil) {
-					[innerSubscriber sendError:error];
+					[innerSubscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.underlyingError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.underlyingError, NSUnderlyingErrorKey: error }]];
 					return NO;
 				}
 				return YES;
@@ -52,7 +82,9 @@ static void releaseCallbackBlock(const void *block) {
 		FSEventStreamRef stream = FSEventStreamCreate(kCFAllocatorDefault, fsEventsCallback, &context, (__bridge CFArrayRef)(@[ url.path ]), kFSEventStreamEventIdSinceNow, 3.0,  kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagWatchRoot);
 
 		FSEventStreamScheduleWithRunLoop(stream, [NSRunLoop currentRunLoop].getCFRunLoop, kCFRunLoopDefaultMode);
-		FSEventStreamStart(stream);
+		if (!FSEventStreamStart(stream)) {
+			[outerSubscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.fsEventsError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.fsEventsError }]];
+		};
 
 		[outerSubscriber sendNext:signal];
 
@@ -71,7 +103,7 @@ static void releaseCallbackBlock(const void *block) {
 		if (success) {
 			[subscriber sendCompleted];
 		} else {
-			[subscriber sendError:error];
+			[subscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.underlyingError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.underlyingError, NSUnderlyingErrorKey: error }]];
 		}
 		return nil;
 	}];
@@ -84,7 +116,7 @@ static void releaseCallbackBlock(const void *block) {
 		if (success) {
 			[subscriber sendCompleted];
 		} else {
-			[subscriber sendError:error];
+			[subscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.underlyingError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.underlyingError, NSUnderlyingErrorKey: error }]];
 		}
 		return nil;
 	}];
@@ -97,7 +129,7 @@ static void releaseCallbackBlock(const void *block) {
 		if (success) {
 			[subscriber sendCompleted];
 		} else {
-			[subscriber sendError:error];
+			[subscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.underlyingError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.underlyingError, NSUnderlyingErrorKey: error }]];
 		}
 		return nil;
 	}];

@@ -10,7 +10,22 @@
 
 @class RACSignal;
 
+typedef struct {
+	/// An operation failed because a call to the underlying framework code failed.
+	/// Check the error's user info's `NSUnderlyingErrorKey` value for details.
+	const NSInteger underlyingError;
+
+	/// RCIOFileManager failed to interface with the FSEvents API.
+	const NSInteger fsEventsError;
+} RCIOFileManagerErrorCodesList;
+
 @interface RCIOFileManager : NSObject
+
+/// The domain for errors sent by RCIOFileManager.
++ (NSString *)errorDomain;
+
+/// The list of error codes for errors sent by RCIOFileManager.
++ (RCIOFileManagerErrorCodesList)errorCodes;
 
 /// Lists the contents of a directory.
 ///
@@ -23,7 +38,6 @@
 /// the directory the url points to changes, or the current directory's contents
 /// do, even if the previous signal has not completed yet. Note that on iOS,
 /// this only happens for changes caused by ReactiveCocoaIO code.
-
 + (RACSignal *)contentsOfDirectoryAtURL:(NSURL *)url options:(NSDirectoryEnumerationOptions)options;
 
 /// Moves or renames a file system item.
@@ -36,7 +50,6 @@
 /// subscription is disposed of before the move or rename is completed the
 /// operation is halted. A possibly incomplete copy of the file system item
 /// might exist at `destinationURL` in that case.
-
 + (RACSignal *)moveItemAtURL:(NSURL *)sourceURL toURL:(NSURL *)destinationURL;
 
 /// Copies a file system item.
@@ -48,7 +61,6 @@
 /// subscription is disposed of before the copy is completed the operation is
 /// halted. A possibly incomplete copy of the file system item might exist at
 /// `destinationURL` in that case.
-
 + (RACSignal *)copyItemAtURL:(NSURL *)sourceURL toURL:(NSURL *)destinationURL;
 
 /// Removes a file system item.
@@ -56,7 +68,6 @@
 /// url - The url of the file system item to remove.
 ///
 /// Returns a signal that executes the removal when subscribed to.
-
 + (RACSignal *)removeItemAtURL:(NSURL *)url;
 
 @end
