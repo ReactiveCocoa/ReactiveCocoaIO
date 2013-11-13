@@ -13,11 +13,18 @@
 @implementation RCIOFileManager
 
 + (RACSignal *)contentsOfDirectoryAtURL:(NSURL *)url options:(NSDirectoryEnumerationOptions)options {
-	return [RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> subscriber) {
-		NSDirectoryEnumerator *enumerator = [[[NSFileManager alloc] init] enumeratorAtURL:url includingPropertiesForKeys:nil options:options errorHandler:nil];
-
-		[subscriber sendNext:enumerator.rac_promise.deferred];
-
+	return [RACSignal createSignal:^ RACDisposable * (id<RACSubscriber> outerSubscriber) {
+		RACSignal *signal = [RACSignal createSignal:^(id<RACSubscriber> innerSubscriber) {
+			NSDirectoryEnumerator *enumerator = [[[NSFileManager alloc] init] enumeratorAtURL:url includingPropertiesForKeys:nil options:options errorHandler:^BOOL(NSURL *errorURL, NSError *error) {
+				if (errorURL == nil) {
+					[innerSubscriber sendError:error];
+					return NO;
+				}
+				return YES;
+			}];
+			return [enumerator.rac_promise.deferred subscribe:innerSubscriber];
+		}];
+		[outerSubscriber sendNext:signal];
 		return nil;
 	}];
 }
