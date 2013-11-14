@@ -31,6 +31,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 	__block void(^removeFilesystemItem)(NSURL *);
 
 	__block void(^subscribeToContentsOfDirectoryAtURL)(NSURL *);
+	__block RACDisposable *subscriptionDisposable;
 
 	__block NSSet *result;
 	__block NSError *outerError;
@@ -48,7 +49,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 		removeFilesystemItem = data[RCIOFileManagerSharedReactionExamplesRemoveBlock];
 
 		subscribeToContentsOfDirectoryAtURL = ^(NSURL *url) {
-			[[[RCIOFileManager contentsOfDirectoryAtURL:url options:0] skip:1] subscribeNext:^(RACSignal *signal) {
+			subscriptionDisposable = [[[RCIOFileManager contentsOfDirectoryAtURL:url options:0] skip:1] subscribeNext:^(RACSignal *signal) {
 				result = pathSetFromURLArray([[signal collect] firstOrDefault:nil success:&innerSuccess error:&innerError]);
 			} error:^(NSError *error) {
 				outerError = error;
@@ -70,6 +71,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 		expect(outerError).to.beNil();
 		expect(outerErrored).to.beFalsy();
 		expect(outerCompleted).to.beFalsy();
+		[subscriptionDisposable dispose];
 	});
 
 	describe(@"should react to", ^{
