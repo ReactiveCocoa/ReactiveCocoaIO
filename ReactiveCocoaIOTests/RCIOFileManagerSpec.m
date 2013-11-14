@@ -242,6 +242,7 @@ sharedExamplesFor(RCIOFileManagerSharedReactionExamples, ^(NSDictionary *data) {
 
 				before(^{
 					subdirectoryURL = [directoryURL URLByAppendingPathComponent:@"subdirectory"];
+					[[[NSFileManager alloc] init] createDirectoryAtURL:subdirectoryURL withIntermediateDirectories:YES attributes:nil error:NULL];
 					itemURLInsideSubdirectory = [subdirectoryURL URLByAppendingPathComponent:@"item"];
 					anotherItemURLInsideSubdirectory = [subdirectoryURL URLByAppendingPathComponent:@"another item"];
 				});
@@ -609,13 +610,13 @@ sharedExamplesFor(RCIOFileManagerSharedExamplesName, ^(NSDictionary *data) {
 				RCIOFileManagerSharedReactionExamplesTestRootDirectoryURL: testRootDirectoryURL,
 				RCIOFileManagerSharedReactionExamplesCreateBlock: createFilesystemItem,
 				RCIOFileManagerSharedReactionExamplesMoveBlock: [^(NSURL *source, NSURL *destination) {
-					[[RCIOFileManager moveItemAtURL:source toURL:destination] subscribeCompleted:^{}];
+					[[[RCIOFileManager moveItemAtURL:source toURL:destination] ignoreValues] first];
 				} copy],
 				RCIOFileManagerSharedReactionExamplesCopyBlock: [^(NSURL *source, NSURL *destination) {
-					[[RCIOFileManager copyItemAtURL:source toURL:destination] subscribeCompleted:^{}];
+					[[[RCIOFileManager copyItemAtURL:source toURL:destination] ignoreValues] first];
 				} copy],
 				RCIOFileManagerSharedReactionExamplesRemoveBlock: [^(NSURL *url) {
-					[[RCIOFileManager removeItemAtURL:url] subscribeCompleted:^{}];
+					[[[RCIOFileManager removeItemAtURL:url] ignoreValues] first];
 				} copy]
 			};
 		});

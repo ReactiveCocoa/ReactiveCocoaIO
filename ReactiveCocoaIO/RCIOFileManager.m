@@ -79,7 +79,7 @@ static void releaseCallbackBlock(const void *block) {
 		context.release = releaseCallbackBlock;
 		context.copyDescription = NULL;
 
-		FSEventStreamRef stream = FSEventStreamCreate(kCFAllocatorDefault, fsEventsCallback, &context, (__bridge CFArrayRef)(@[ url.path ]), kFSEventStreamEventIdSinceNow, 3.0,  kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagWatchRoot);
+		FSEventStreamRef stream = FSEventStreamCreate(kCFAllocatorDefault, fsEventsCallback, &context, (__bridge CFArrayRef)(@[ url.path ]), kFSEventStreamEventIdSinceNow, 0.5,  kFSEventStreamCreateFlagNoDefer | kFSEventStreamCreateFlagWatchRoot);
 
 		FSEventStreamScheduleWithRunLoop(stream, [NSRunLoop currentRunLoop].getCFRunLoop, kCFRunLoopDefaultMode);
 		if (!FSEventStreamStart(stream)) {
