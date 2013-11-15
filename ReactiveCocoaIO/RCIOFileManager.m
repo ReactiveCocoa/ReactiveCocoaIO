@@ -22,6 +22,8 @@ typedef struct {
 
 @end
 
+#if !TARGET_OS_IPHONE
+
 static void fsEventsCallback(ConstFSEventStreamRef streamRef, void *clientCallBackInfo, size_t numEvents, void *eventPaths, const FSEventStreamEventFlags eventFlags[], const FSEventStreamEventId eventIds[]) {
 	void (^callbackBlock)(void) = (__bridge void (^)(void))(clientCallBackInfo);
 	callbackBlock();
@@ -34,6 +36,8 @@ static const void *copyCallbackBlock(const void *block) {
 static void releaseCallbackBlock(const void *block) {
 	_Block_release(block);
 }
+
+#endif
 
 @implementation RCIOFileManager
 
@@ -68,6 +72,7 @@ static void releaseCallbackBlock(const void *block) {
 			return [enumerator.rac_promise.deferred subscribe:innerSubscriber];
 		}];
 
+#if !TARGET_OS_IPHONE
 		void (^callbackBlock)(void) = ^{
 			[outerSubscriber sendNext:signal];
 		};
@@ -85,14 +90,19 @@ static void releaseCallbackBlock(const void *block) {
 		if (!FSEventStreamStart(stream)) {
 			[outerSubscriber sendError:[NSError errorWithDomain:self.errorDomain code:self.errorCodes.fsEventsError userInfo:@{ NSLocalizedDescriptionKey: self.errorMessages.fsEventsError }]];
 		};
+#endif
 
 		[outerSubscriber sendNext:signal];
 
+#if !TARGET_OS_IPHONE
 		return [RACDisposable disposableWithBlock:^{
 			FSEventStreamStop(stream);
 			FSEventStreamInvalidate(stream);
 			FSEventStreamRelease(stream);
 		}];
+#else
+		return nil;
+#endif
 	}];
 }
 

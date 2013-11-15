@@ -9,6 +9,7 @@
 #import "RCIODirectory+Private.h"
 #import "RCIOItem+Private.h"
 
+#import <libkern/OSAtomic.h>
 #import <ReactiveCocoa/ReactiveCocoa.h>
 
 #import "NSURL+TrailingSlash.h"
