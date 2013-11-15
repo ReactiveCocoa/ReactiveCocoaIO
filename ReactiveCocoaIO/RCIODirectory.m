@@ -104,13 +104,13 @@ static void processContent(NSArray *input, NSMutableArray *output, NSDirectoryEn
 				}
 				
 				return children;
-			}] startWith:children] map:^ NSArray * (NSArray *content) {
+			}] startWith:children] map:^(NSArray *content) {
 				if (__isCancelled != 0) return @[];
 				
 				NSMutableArray *processedContent = [NSMutableArray arrayWithCapacity:content.count];
 				processContent(content, processedContent, options, &__isCancelled);
 				
-				return processedContent;
+				return (NSArray *)processedContent;
 			}] subscribe:subscriber]];
 		}]];
 		
